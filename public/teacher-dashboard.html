@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Dashboard — NEW_DAWN_COMPANION</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  body { display: flex; flex-direction: column; }
+  .layout { display: flex; flex: 1; }
+
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--ink-900);
+    border-right: 1px solid var(--line);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .sidebar-section-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  
+  .class-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .class-list-item { 
+    display: flex; 
+    flex-direction: column; /* Stack name and code vertically */
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .class-list-item:hover { background: var(--ink-800); }
+  .class-list-item.active { 
+    background: var(--ink-800); 
+    border-left: 3px solid var(--dawn-gold);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .class-name-row {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    width: 100%;
+  }
+  
+  .class-name-text {
+    flex: 1; 
+    color: var(--text-primary); 
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  /* NEW: Join Code Styling in Sidebar */
+  .join-code-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .join-code-value {
+    color: var(--dawn-gold);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+  .copy-code-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .copy-code-btn:hover { background: var(--ink-700); color: white; border-color: var(--dawn-gold); }
+  .copy-code-btn.copied { background: #4ade80; color: #111; border-color: #4ade80; }
+  
+  .delete-class-btn {
+    background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem;
+    cursor: pointer; padding: 0 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  }
+  .delete-class-btn:hover { color: var(--dawn-rose); background: var(--ink-700); }
+
+  .new-class-btn {
+    margin-top: auto; background: transparent; border: 1px dashed var(--line);
+    color: var(--text-muted); padding: 10px; border-radius: var(--radius); font-size: 0.85rem; cursor: pointer;
+  }
+  .new-class-btn:hover { border-color: var(--dawn-gold); color: var(--dawn-gold); }
+
+  main { flex: 1; padding: 24px 40px 80px; max-width: 900px; }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .tab {
+    background: none; border: none; color: var(--text-muted); padding: 10px 4px;
+    margin-right: 20px; font-family: var(--font-mono); font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab.active { color: var(--dawn-gold); border-bottom-color: var(--dawn-gold); }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  h1 { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 4px; }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; }
+  .page-actions { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
+
+  .subject-card { background: var(--ink-900); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+  .subject-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; cursor: pointer; }
+  .subject-title { font-family: var(--font-display); font-size: 1.05rem; display: flex; align-items: center; gap: 10px; }
+  .subject-title .caret { color: var(--dawn-gold); font-size: 0.75rem; transition: transform 0.15s ease; display:inline-block; }
+  .subject-card.collapsed .subject-title .caret { transform: rotate(-90deg); }
+  .subject-actions { display: flex; gap: 4px; }
+  .chapter-list { border-top: 1px solid var(--line); }
+  .subject-card.collapsed .chapter-list { display: none; }
+
+  .chapter-row { border-bottom: 1px solid var(--ink-800); }
+  .chapter-row:last-child { border-bottom: none; }
+  .chapter-row-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px 12px 36px; font-size: 0.9rem; cursor: pointer; }
+  .chapter-row-header:hover { background: var(--ink-800); }
+  .chapter-detail { display: none; padding: 0 18px 18px 36px; }
+  .chapter-row.expanded .chapter-detail { display: block; }
+
+  .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; padding: 4px 8px; }
+  .btn-icon:hover { color: var(--dawn-gold); }
+  .btn-icon.danger:hover { color: var(--dawn-rose); }
+
+  .add-row { padding: 10px 18px 14px 36px; }
+  .add-row button { background: none; border: none; color: var(--dawn-gold); font-family: var(--font-mono); font-size: 0.78rem; cursor: pointer; }
+  .add-row button:hover { text-decoration: underline; }
+
+  .detail-block { margin-bottom: 14px; }
+  .detail-block-label { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .quiz-status { font-size: 0.82rem; color: var(--text-muted); margin-top: 8px; }
+
+  .pending-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 16px 20px; background: var(--ink-900); border: 1px solid var(--line);
+    border-radius: var(--radius); margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .pending-row .who { min-width: 180px; }
+  .pending-row .name { font-family: var(--font-display); font-size: 1.02rem; }
+  .pending-row .email { color: var(--text-muted); font-size: 0.8rem; }
+  .assign-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .assign-controls select { min-width: 180px; }
+
+  /* GRADEBOOK TABLE STYLES */
+  .gradebook-container {
+    background: var(--ink-900);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow-x: auto;
+  }
+  .gradebook-table { width: 100%; text-align: left; border-collapse: collapse; }
+  .gradebook-table th {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--ink-950);
+  }
+  .gradebook-table td { padding: 16px 20px; border-bottom: 1px solid var(--ink-800); }
+  .gradebook-table tr:last-child td { border-bottom: none; }
+  .gradebook-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(10,12,26,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--ink-900); border: 1px solid var(--line); border-radius: var(--radius); width: 100%; max-width: 480px; padding: 26px; }
+  .modal h2 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 16px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">new<span>_</span>dawn <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-mono);">TEACHER</span></div>
+  <div class="top-bar-right">
+    <span class="user-chip" id="userChip"></span>
+    <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div>
+      <div class="sidebar-section-label">Your Classes</div>
+      <ul class="class-list" id="classList"><li style="color:var(--text-muted); font-size:0.85rem; padding:8px 12px;">Loading…</li></ul>
+    </div>
+    <button class="new-class-btn" id="newClassBtn">+ New class</button>
+  </aside>
+
+  <main>
+    <!-- TABS -->
+    <div class="tabs" id="mainTabs" style="display: none;">
+      <button class="tab active" data-view="hierarchyView">My Classes</button>
+      <button class="tab" data-view="gradebookView">Gradebook</button>
+      <button class="tab" data-view="approvalsView">Student Approvals</button>
+      <button class="tab" data-view="myStudentsView">My Students</button>
+    </div>
+
+    <div id="actionBanner" class="banner"></div>
+
+    <!-- NEW VIEW: Semesters List -->
+    <div class="view active" id="semestersView">
+      <h1 id="activeClassNameSemesters">Select a class</h1>
+      <p class="subtitle" id="activeClassSubtitleSemesters">Choose a class from the sidebar, or create a new one.</p>
+      <div class="page-actions">
+        <span></span>
+        <button class="btn btn-primary" id="addSemesterBtn" style="display:none;">+ Add Semester</button>
+      </div>
+      <div id="semestersContainer"></div>
+      <div class="empty-state" id="noClassSelectedSemesters">
+        <p>No class selected yet.</p>
+      </div>
+    </div>
+
+    <!-- HIERARCHY VIEW -->
+    <div class="view" id="hierarchyView">
+      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+         <button class="btn btn-ghost" id="backToSemestersBtn" style="padding: 4px 8px;">← Back</button>
+         <h1 id="activeSemesterName" style="margin: 0;">Select a semester</h1>
+      </div>
+      <p class="subtitle">Manage subjects and chapters below.</p>
+      <div class="page-actions">
+        <span></span>
+        <button class="btn btn-primary" id="addSubjectBtn" style="display:none;">+ Add subject</button>
+      </div>
+      <div id="subjectsContainer"></div>
+    </div>
+
+    <!-- GRADEBOOK VIEW -->
+    <div class="view" id="gradebookView">
+      <h1>Class Gradebook</h1>
+      <p class="subtitle">View all student quiz attempts and scores for this class.</p>
+      <div class="dawn-line" style="margin: 16px 0 24px;"></div>
+      
+      <div class="gradebook-container" id="gradebookContainer" style="display: none;">
+        <table class="gradebook-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Quiz Title</th>
+              <th>Score</th>
+              <th>Submitted At</th>
+            </tr>
+          </thead>
+          <tbody id="gradebookTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="noGradebookData" style="display:none;">
+        <p>No quiz attempts found for this class yet.</p>
+      </div>
+    </div>
+
+    <!-- APPROVALS VIEW -->
+    <div class="view" id="approvalsView">
+      <h1>Pending Student Accounts</h1>
+      <p class="subtitle">Approve a student and assign them to one of your classes in one step.</p>
+      <div class="dawn-line" style="margin: 16px 0 24px;"></div>
+      <div id="pendingStudentsList"></div>
+      <div class="empty-state" id="noPendingStudents" style="display:none;">
+        <p>No pending Student applications right now.</p>
+      </div>
+    </div>
+
+    <!-- MY STUDENTS VIEW -->
+    <div class="view" id="myStudentsView">
+      <h1>My Students</h1>
+      <p class="subtitle">A list of all your approved and active students.</p>
+      <div class="dawn-line" style="margin: 16px 0 24px;"></div>
+      <div id="myStudentsList"></div>
+    </div>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="modal-backdrop" id="newClassModal">
+  <div class="modal">
+    <h2>New Class</h2>
+    <div class="field"><label for="newClassName">Class name</label><input type="text" id="newClassName" placeholder="e.g. Algebra II — Sec. B"></div>
+    <div class="field"><label for="newClassDesc">Description (optional)</label><textarea id="newClassDesc" style="min-height:70px;"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="cancelNewClass">Cancel</button>
+      <button class="btn btn-primary" id="saveNewClass">Create class</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="newSemesterModal">
+  <div class="modal">
+    <h2>New Semester</h2>
+    <div class="field"><label for="newSemesterName">Semester name</label><input type="text" id="newSemesterName" placeholder="e.g. Semester 1"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="cancelNewSemester">Cancel</button>
+      <button class="btn btn-primary" id="saveNewSemester">Create semester</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="newSubjectModal">
+  <div class="modal">
+    <h2>New Subject</h2>
+    <div class="field"><label for="newSubjectName">Subject name</label><input type="text" id="newSubjectName" placeholder="e.g. Linear Equations"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="cancelNewSubject">Cancel</button>
+      <button class="btn btn-primary" id="saveNewSubject">Create subject</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="chapterModal">
+  <div class="modal">
+    <h2 id="chapterModalTitle">Add Chapter</h2>
+    <div class="field"><label for="chapterTitle">Title</label><input type="text" id="chapterTitle"></div>
+    <div class="field"><label for="chapterOrder">Order</label><input type="number" id="chapterOrder" value="1" min="0"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="cancelChapterModal">Cancel</button>
+      <button class="btn btn-primary" id="saveChapterModal">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth(['teacher']);
+  if (user) document.getElementById('userChip').textContent = `${user.fullName} · Teacher`;
+  document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+  let classes = [];
+  let activeClassId = null;
+  let activeSemesterId = null;
+  let subjectsCache = {};
+  let chaptersCache = {};
+
+  // Handle Tab Switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.view).classList.add('active');
+      
+      if (tab.dataset.view === 'approvalsView') loadPendingStudents();
+      if (tab.dataset.view === 'myStudentsView') loadMyStudents(); 
+      if (tab.dataset.view === 'gradebookView') loadGradebook(); 
+    });
+  });
+
+  // Handle Back to Semesters Button
+  document.getElementById('backToSemestersBtn').addEventListener('click', () => {
+      document.getElementById('mainTabs').style.display = 'none';
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('semestersView').classList.add('active');
+  });
+
+  // --- CLASSES ---
+  async function loadClasses() {
+    try {
+      const res = await apiFetch('/classes');
+      classes = await res.json();
+      if (!res.ok) { showBanner('actionBanner', classes.error || 'Failed to load classes.'); return; }
+
+      const list = document.getElementById('classList');
+      list.innerHTML = '';
+      if (classes.length === 0) {
+        list.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem; padding:8px 12px;">No classes yet.</li>';
+        return;
+      }
+      classes.forEach(cls => {
+        const li = document.createElement('li');
+        li.className = 'class-list-item ' + (cls.id === activeClassId ? 'active' : '');
+        
+        // Ensure clicking anywhere on the item selects the class
+        li.addEventListener('click', () => selectClass(cls.id));
+        
+        // Format the display
+        const codeDisplay = cls.join_code ? cls.join_code : 'N/A';
+        
+        li.innerHTML = `
+          <div class="class-name-row">
+            <div class="class-name-text">${escapeHtml(cls.name)}</div>
+            <button class="delete-class-btn" title="Delete Class" data-id="${cls.id}">×</button>
+          </div>
+          <div class="join-code-row">
+            Code: <span class="join-code-value">${codeDisplay}</span>
+            ${cls.join_code ? `<button class="copy-code-btn" data-code="${cls.join_code}">Copy</button>` : ''}
+          </div>
+        `;
+
+        // Handle delete button specifically
+        const delBtn = li.querySelector('.delete-class-btn');
+        delBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent selecting the class when deleting
+            deleteClass(cls.id);
+        });
+
+        // Handle copy code button specifically
+        const copyBtn = li.querySelector('.copy-code-btn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent selecting the class when copying
+                navigator.clipboard.writeText(copyBtn.dataset.code);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        list.appendChild(li);
+      });
+
+      if (!activeClassId && classes.length > 0) selectClass(classes[0].id);
+    } catch (err) {
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  function selectClass(classId) {
+    activeClassId = classId;
+    activeSemesterId = null;
+
+    document.querySelectorAll('.class-list-item').forEach(item => {
+      // Find the delete button inside the item to get the ID
+      const btn = item.querySelector('.delete-class-btn');
+      if (btn && btn.dataset.id === String(classId)) {
+          item.classList.add('active');
+      } else {
+          item.classList.remove('active');
+      }
+    });
+
+    const cls = classes.find(c => c.id === classId);
+    
+    // Hide standard views and tabs, show Semesters View
+    document.getElementById('mainTabs').style.display = 'none';
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    
+    document.getElementById('semestersView').classList.add('active');
+    document.getElementById('activeClassNameSemesters').textContent = cls.name;
+    document.getElementById('activeClassSubtitleSemesters').textContent = cls.description || 'Manage semesters below.';
+    document.getElementById('addSemesterBtn').style.display = 'inline-block';
+    document.getElementById('noClassSelectedSemesters').style.display = 'none';
+    
+    loadSemesters(classId);
+  }
+
+  async function deleteClass(classId) {
+      if (!confirm('Are you sure you want to delete this class? This will permanently delete all semesters, subjects, chapters, and remove all students. This cannot be undone.')) return;
+
+      const res = await apiFetch(`/classes/${classId}`, { method: 'DELETE' });
+      if (!res.ok && res.status !== 204) {
+          const data = await res.json();
+          showBanner('actionBanner', data.error || 'Failed to delete class.');
+          return;
+      }
+      
+      showBanner('actionBanner', 'Class deleted successfully.', 'success');
+      
+      if (activeClassId === classId) {
+          activeClassId = null;
+          document.getElementById('noClassSelectedSemesters').style.display = 'block';
+          document.getElementById('semestersContainer').innerHTML = '';
+          document.getElementById('addSemesterBtn').style.display = 'none';
+          document.getElementById('activeClassNameSemesters').textContent = 'Select a class';
+          document.getElementById('mainTabs').style.display = 'none';
+      }
+      loadClasses();
+  }
+
+  document.getElementById('newClassBtn').addEventListener('click', () => document.getElementById('newClassModal').classList.add('open'));
+  document.getElementById('cancelNewClass').addEventListener('click', () => document.getElementById('newClassModal').classList.remove('open'));
+  document.getElementById('saveNewClass').addEventListener('click', async () => {
+    const name = document.getElementById('newClassName').value.trim();
+    if (!name) return;
+    const res = await apiFetch('/classes', { method: 'POST', body: { name, description: document.getElementById('newClassDesc').value.trim() } });
+    const data = await res.json();
+    if (!res.ok) { showBanner('actionBanner', data.error || 'Failed to create class.'); return; }
+    document.getElementById('newClassModal').classList.remove('open');
+    document.getElementById('newClassName').value = '';
+    document.getElementById('newClassDesc').value = '';
+    await loadClasses();
+    selectClass(data.id); // The data object returned from the backend will now include the auto-generated join_code
+  });
+
+  // --- SEMESTERS ---
+  async function loadSemesters(classId) {
+    const container = document.getElementById('semestersContainer');
+    container.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading semesters…</div>';
+    try {
+      const res = await apiFetch(`/classes/${classId}/semesters`);
+      const semesters = await res.json();
+      if (!res.ok) { showBanner('actionBanner', semesters.error || 'Failed to load semesters.'); return; }
+      
+      container.innerHTML = '';
+      if (semesters.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No semesters created yet.</p></div>';
+        return;
+      }
+
+      semesters.forEach(sem => {
+        const card = document.createElement('div');
+        card.className = 'subject-card'; // Reuse subject card style for consistent UI
+        card.style.cursor = 'pointer';
+        card.innerHTML = `
+          <div class="subject-header" onclick="selectSemester('${sem.id}', '${escapeHtml(sem.name)}')">
+            <div class="subject-title">${escapeHtml(sem.name)}</div>
+            <div class="subject-actions">
+              <button class="btn-icon danger" onclick="event.stopPropagation(); deleteSemester('${sem.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    } catch (err) {
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  function selectSemester(semesterId, semesterName) {
+    activeSemesterId = semesterId;
+    
+    // Hide Semesters View, Show Tabs
+    document.getElementById('semestersView').classList.remove('active');
+    document.getElementById('mainTabs').style.display = 'flex';
+    
+    // Switch to first tab (My Classes / Subjects)
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-view="hierarchyView"]').classList.add('active');
+    
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('hierarchyView').classList.add('active');
+    
+    document.getElementById('activeSemesterName').textContent = semesterName;
+    document.getElementById('addSubjectBtn').style.display = 'inline-block';
+    
+    loadSubjects(semesterId);
+  }
+
+  async function deleteSemester(semId) {
+      if (!confirm('Are you sure you want to delete this semester and all its subjects?')) return;
+      const res = await apiFetch(`/semesters/${semId}?classId=${activeClassId}`, { method: 'DELETE' });
+      if (!res.ok && res.status !== 204) {
+          const data = await res.json();
+          showBanner('actionBanner', data.error || 'Failed to delete semester.');
+          return;
+      }
+      loadSemesters(activeClassId);
+  }
+
+  document.getElementById('addSemesterBtn').addEventListener('click', () => document.getElementById('newSemesterModal').classList.add('open'));
+  document.getElementById('cancelNewSemester').addEventListener('click', () => document.getElementById('newSemesterModal').classList.remove('open'));
+  document.getElementById('saveNewSemester').addEventListener('click', async () => {
+    const name = document.getElementById('newSemesterName').value.trim();
+    if (!name || !activeClassId) return;
+    const res = await apiFetch(`/classes/${activeClassId}/semesters`, { method: 'POST', body: { name } });
+    const data = await res.json();
+    if (!res.ok) { showBanner('actionBanner', data.error || 'Failed to create semester.'); return; }
+    document.getElementById('newSemesterModal').classList.remove('open');
+    document.getElementById('newSemesterName').value = '';
+    loadSemesters(activeClassId);
+  });
+
+  // --- SUBJECTS ---
+  async function loadSubjects(semesterId) {
+    const container = document.getElementById('subjectsContainer');
+    container.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading subjects…</div>';
+    try {
+      const res = await apiFetch(`/semesters/${semesterId}/subjects?classId=${activeClassId}`);
+      const subjects = await res.json();
+      if (!res.ok) { showBanner('actionBanner', subjects.error || 'Failed to load subjects.'); return; }
+      subjects.forEach(s => subjectsCache[s.id] = s);
+      renderSubjects(subjects);
+    } catch (err) {
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  function renderSubjects(subjects) {
+    const container = document.getElementById('subjectsContainer');
+    container.innerHTML = '';
+
+    if (subjects.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>No subjects yet in this semester.</p></div>';
+      return;
+    }
+
+    subjects.forEach(subject => {
+      const card = document.createElement('div');
+      card.className = 'subject-card collapsed'; 
+      card.innerHTML = `
+        <div class="subject-header" data-subject="${subject.id}">
+          <div class="subject-title"><span class="caret">▾</span> ${escapeHtml(subject.name)}</div>
+          <div class="subject-actions">
+            <button class="btn-icon danger" data-delete-subject="${subject.id}">Delete</button>
+          </div>
+        </div>
+        <div class="chapter-list" id="chapters-${subject.id}">
+          <div class="loading-row" style="padding-left:36px;"><span class="spinner"></span> Loading chapters…</div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    document.querySelectorAll('.subject-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        if (e.target.closest('[data-delete-subject]')) return;
+        const card = header.closest('.subject-card');
+        const wasCollapsed = card.classList.contains('collapsed');
+        card.classList.toggle('collapsed');
+        if (wasCollapsed) loadChapters(header.dataset.subject);
+      });
+    });
+
+    document.querySelectorAll('[data-delete-subject]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('Delete this subject and all its chapters?')) return;
+        const res = await apiFetch(`/subjects/${btn.dataset.deleteSubject}?classId=${activeClassId}`, { method: 'DELETE' });
+        if (!res.ok && res.status !== 204) {
+          const data = await res.json();
+          showBanner('actionBanner', data.error || 'Failed to delete subject.');
+          return;
+        }
+        loadSubjects(activeSemesterId);
+      });
+    });
+  }
+
+  document.getElementById('addSubjectBtn').addEventListener('click', () => document.getElementById('newSubjectModal').classList.add('open'));
+  document.getElementById('cancelNewSubject').addEventListener('click', () => document.getElementById('newSubjectModal').classList.remove('open'));
+  document.getElementById('saveNewSubject').addEventListener('click', async () => {
+    const name = document.getElementById('newSubjectName').value.trim();
+    if (!name || !activeSemesterId) return;
+    const res = await apiFetch(`/semesters/${activeSemesterId}/subjects?classId=${activeClassId}`, { method: 'POST', body: { name } });
+    const data = await res.json();
+    if (!res.ok) { showBanner('actionBanner', data.error || 'Failed to create subject.'); return; }
+    document.getElementById('newSubjectModal').classList.remove('open');
+    document.getElementById('newSubjectName').value = '';
+    loadSubjects(activeSemesterId);
+  });
+
+  // --- CHAPTERS & FILES ---
+  async function loadChapters(subjectId) {
+    const container = document.getElementById(`chapters-${subjectId}`);
+    container.innerHTML = '<div class="loading-row" style="padding-left:36px;"><span class="spinner"></span> Loading chapters…</div>';
+    
+    try {
+      const res = await apiFetch(`/subjects/${subjectId}/chapters?classId=${activeClassId}`);
+      const chapters = await res.json();
+      if (!res.ok) { 
+        container.innerHTML = `<div style="padding: 12px 18px 12px 36px; color: var(--dawn-rose); font-size: 0.85rem;">Error: ${chapters.error || 'Failed to load chapters.'}</div>`;
+        return; 
+      }
+      chaptersCache[subjectId] = chapters;
+      renderChapters(subjectId, chapters);
+    } catch (err) {
+      container.innerHTML = `<div style="padding: 12px 18px 12px 36px; color: var(--dawn-rose); font-size: 0.85rem;">Server error. Please check your terminal.</div>`;
+    }
+  }
+
+  function renderChapters(subjectId, chapters) {
+    const container = document.getElementById(`chapters-${subjectId}`);
+    container.innerHTML = '';
+
+    chapters.forEach(ch => {
+      const row = document.createElement('div');
+      row.className = 'chapter-row';
+      row.innerHTML = `
+        <div class="chapter-row-header" data-chapter="${ch.id}">
+          <div><span style="font-family:var(--font-mono); color:var(--text-muted); margin-right:8px;">${String(ch.sequence_order).padStart(2,'0')}</span>${escapeHtml(ch.title)}</div>
+          <div>
+            <button class="btn-icon" data-edit-chapter="${ch.id}">Edit</button>
+            <button class="btn-icon danger" data-delete-chapter="${ch.id}">Delete</button>
+          </div>
+        </div>
+        <div class="chapter-detail" id="detail-${ch.id}"></div>
+      `;
+      container.appendChild(row);
+    });
+
+    container.insertAdjacentHTML('beforeend', `<div class="add-row"><button data-add-chapter="${subjectId}">+ Add chapter</button></div>`);
+
+    container.querySelectorAll('.chapter-row-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        const row = header.closest('.chapter-row');
+        const wasExpanded = row.classList.contains('expanded');
+        document.querySelectorAll('.chapter-row.expanded').forEach(r => r.classList.remove('expanded'));
+        if (!wasExpanded) {
+          row.classList.add('expanded');
+          loadChapterDetail(header.dataset.chapter, subjectId);
+        }
+      });
+    });
+
+    container.querySelectorAll('[data-edit-chapter]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const chapter = chapters.find(c => c.id === btn.dataset.editChapter);
+        openChapterModal({ mode: 'edit', subjectId, chapterId: chapter.id, title: chapter.title, order: chapter.sequence_order });
+      });
+    });
+
+    container.querySelectorAll('[data-delete-chapter]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('Delete this chapter?')) return;
+        const res = await apiFetch(`/chapters/${btn.dataset.deleteChapter}?classId=${activeClassId}`, { method: 'DELETE' });
+        if (!res.ok && res.status !== 204) return;
+        loadChapters(subjectId);
+      });
+    });
+
+    container.querySelector('[data-add-chapter]')?.addEventListener('click', () => {
+      openChapterModal({ mode: 'add', subjectId });
+    });
+  }
+
+  async function loadChapterDetail(chapterId, subjectId) {
+    const detail = document.getElementById(`detail-${chapterId}`);
+    detail.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading chapter elements…</div>';
+
+    let materials = [];
+    let quizzes = [];
+    try {
+      const matRes = await apiFetch(`/chapters/${chapterId}/study-material?classId=${activeClassId}`);
+      if (matRes.ok) materials = await matRes.json();
+      
+      const quizRes = await apiFetch(`/chapters/${chapterId}/quizzes?classId=${activeClassId}`);
+      if (quizRes.ok) quizzes = await quizRes.json();
+    } catch (err) { /* fall through */ }
+
+    const filesHtml = materials && materials.length > 0 
+      ? materials.map(m => {
+          const fileName = m.title || (m.content ? m.content.split('/').pop() : 'Uploaded Document');
+          return `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:var(--ink-800); padding:8px 12px; border-radius:4px;">
+            <span style="color:var(--text-primary); font-size:0.85rem;">📄 ${escapeHtml(fileName)}</span>
+            <div style="display:flex; gap: 8px;">
+               <a href="${m.content}" target="_blank" class="btn-icon" style="text-decoration: none; display: flex; align-items: center;">View</a>
+               <button class="btn-icon danger" data-delete-material="${m.id}" data-chapter="${chapterId}">Delete</button>
+            </div>
+          </div>
+          `;
+        }).join('')
+      : '<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 12px;">No study files uploaded yet.</p>';
+
+    const quizzesHtml = quizzes && quizzes.length > 0
+      ? quizzes.map(q => `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--ink-800); padding:10px 14px; border-radius:4px; margin-bottom:6px;">
+            <span style="font-size:0.9rem; font-weight:bold; color:var(--dawn-gold);">📝 ${escapeHtml(q.title)}</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <label style="font-size:0.75rem; color:var(--text-muted);">Time Limit (mins):</label>
+              <input type="number" value="${q.time_limit_minutes}" style="width:60px; padding:4px; text-align:center;" 
+                     onchange="updateQuizTime('${q.id}', this.value, '${chapterId}', '${subjectId}')">
+            </div>
+          </div>
+        `).join('')
+      : '<p style="color:var(--text-muted); font-size:0.85rem;">No quiz sets created for this chapter yet.</p>';
+
+    detail.innerHTML = `
+      <div class="detail-block">
+        <div class="detail-block-label">Uploaded Study Materials</div>
+        <div style="margin-bottom: 16px;">${filesHtml}</div>
+        
+        <div class="detail-block-label">Upload New Files (PDF/Doc)</div>
+        <input type="file" id="material-file-${chapterId}" style="margin-bottom: 10px; color: var(--text-muted);" accept=".pdf,.doc,.docx,.txt" multiple>
+        <button class="btn btn-ghost" style="margin-bottom: 24px;" data-save-material="${chapterId}">Upload Study Files</button>
+        
+        <div class="dawn-line" style="margin: 16px 0;"></div>
+
+        <div class="detail-block-label" style="color:var(--dawn-gold);">Import Question Bank (Text File)</div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">
+           Upload a text file containing questions, options, and answers. The system will auto-slice them into sets of 25.
+        </p>
+        <input type="file" id="quiz-bank-file-${chapterId}" style="margin-bottom: 10px; color: var(--text-muted);" accept=".txt">
+        <button class="btn btn-primary" data-upload-bank="${chapterId}">Process Question Bank</button>
+        
+        <div class="quiz-status" id="quiz-status-${chapterId}" style="margin-top:8px;"></div>
+        
+        <div class="detail-block-label" style="margin-top:20px;">Active Quiz Sets</div>
+        <div>${quizzesHtml}</div>
+      </div>
+    `;
+
+    detail.querySelector(`[data-save-material="${chapterId}"]`).addEventListener('click', async () => {
+      const fileInput = document.getElementById(`material-file-${chapterId}`);
+      if (fileInput.files.length === 0) return;
+      const formData = new FormData();
+      for (let i = 0; i < fileInput.files.length; i++) { formData.append('material_files', fileInput.files[i]); }
+
+      const token = Auth.getToken();
+      const res = await fetch(`/api/chapters/${chapterId}/study-material?classId=${activeClassId}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+      });
+      if (res.ok) loadChapterDetail(chapterId, subjectId);
+    });
+
+    detail.querySelector(`[data-upload-bank="${chapterId}"]`).addEventListener('click', async (e) => {
+      const fileInput = document.getElementById(`quiz-bank-file-${chapterId}`);
+      if (fileInput.files.length === 0) { alert('Please select a .txt question bank file first.'); return; }
+      
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = 'Parsing & Chunking sets…';
+      const statusEl = document.getElementById(`quiz-status-${chapterId}`);
+      statusEl.textContent = 'Processing through AI engine...';
+
+      const formData = new FormData();
+      formData.append('question_bank', fileInput.files[0]);
+
+      try {
+        const token = Auth.getToken();
+        const res = await fetch(`/api/chapters/${chapterId}/quiz/import-bank?classId=${activeClassId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            statusEl.style.color = 'var(--dawn-rose)';
+            statusEl.textContent = data.error || 'Failed to process question bank.';
+            return;
+        }
+        statusEl.style.color = 'var(--dawn-gold)';
+        statusEl.textContent = `Success! ${data.message}`;
+        loadChapterDetail(chapterId, subjectId);
+      } catch (err) {
+         statusEl.textContent = 'Server connection issue.';
+      } finally {
+         btn.disabled = false;
+         btn.textContent = 'Process Question Bank';
+      }
+    });
+
+    detail.querySelectorAll('[data-delete-material]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!confirm('Delete this document?')) return;
+            await apiFetch(`/chapters/${chapterId}/study-material/${btn.dataset.deleteMaterial}?classId=${activeClassId}`, { method: 'DELETE' });
+            loadChapterDetail(chapterId, subjectId);
+        });
+    });
+  }
+
+  async function updateQuizTime(quizId, newMinutes, chapterId, subjectId) {
+      const res = await apiFetch(`/quizzes/${quizId}/time-limit`, {
+          method: 'PUT',
+          body: { timeLimit: parseInt(newMinutes, 10) || 25 }
+      });
+      if (!res.ok) {
+          alert('Failed to update time limit.');
+      }
+  }
+
+  let activeChapterSubjectId = null;
+  let activeEditChapterId = null;
+
+  function openChapterModal({ mode, subjectId, chapterId, title = '', order = 1 }) {
+    activeChapterSubjectId = subjectId;
+    activeEditChapterId = chapterId || null;
+    document.getElementById('chapterModalTitle').textContent = mode === 'edit' ? 'Edit Chapter' : 'Add Chapter';
+    document.getElementById('chapterTitle').value = title;
+    document.getElementById('chapterOrder').value = order;
+    document.getElementById('chapterModal').classList.add('open');
+  }
+  
+  document.getElementById('cancelChapterModal').addEventListener('click', () => document.getElementById('chapterModal').classList.remove('open'));
+  
+  document.getElementById('saveChapterModal').addEventListener('click', async () => {
+    const title = document.getElementById('chapterTitle').value.trim();
+    const sequence_order = parseInt(document.getElementById('chapterOrder').value, 10) || 0;
+    if (!title) return;
+
+    if (activeEditChapterId) {
+      await apiFetch(`/chapters/${activeEditChapterId}`, { method: 'PUT', body: { title, sequence_order, classId: activeClassId } });
+    } else {
+      await apiFetch(`/subjects/${activeChapterSubjectId}/chapters`, { method: 'POST', body: { title, sequence_order, classId: activeClassId } });
+    }
+    document.getElementById('chapterModal').classList.remove('open');
+    loadChapters(activeChapterSubjectId);
+  });
+
+  // --- GRADEBOOK (NEW) ---
+  async function loadGradebook() {
+    const tbody = document.getElementById('gradebookTableBody');
+    const container = document.getElementById('gradebookContainer');
+    const emptyState = document.getElementById('noGradebookData');
+    
+    tbody.innerHTML = '<tr><td colspan="4" class="loading-row"><span class="spinner"></span> Fetching grades...</td></tr>';
+    container.style.display = 'block';
+    emptyState.style.display = 'none';
+
+    if (!activeClassId) {
+      container.style.display = 'none';
+      emptyState.style.display = 'block';
+      emptyState.innerHTML = '<p>Please select a class from the sidebar first to view the gradebook.</p>';
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/classes/${activeClassId}/gradebook`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color: var(--dawn-rose);">Error: ${data.error || 'Failed to load gradebook'}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      if (data.length === 0) {
+        container.style.display = 'none';
+        emptyState.innerHTML = '<p>No quiz attempts found for this class yet.</p>';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      data.forEach(attempt => {
+        const percentage = attempt.total_questions > 0 ? Math.round((attempt.score / attempt.total_questions) * 100) : 0;
+        const scoreColor = percentage >= 70 ? '#4ade80' : 'var(--dawn-rose)';
+        const date = new Date(attempt.submitted_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div style="font-weight: bold; color: var(--text-primary); font-family: var(--font-display); font-size: 1.05rem;">${escapeHtml(attempt.student_name)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(attempt.student_email)}</div>
+          </td>
+          <td style="font-size: 0.95rem; color: var(--text-primary);">${escapeHtml(attempt.quiz_title)}</td>
+          <td>
+            <div style="font-family: var(--font-mono); font-size: 1.1rem; color: ${scoreColor}; font-weight: bold;">${percentage}%</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${attempt.score} / ${attempt.total_questions} correct</div>
+          </td>
+          <td style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono);">${date}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color: var(--dawn-rose);">Network error loading gradebook.</td></tr>';
+    }
+  }
+
+  // --- APPROVALS & STUDENTS ---
+  async function loadPendingStudents() {
+    const list = document.getElementById('pendingStudentsList');
+    const emptyState = document.getElementById('noPendingStudents');
+    list.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading pending students…</div>';
+
+    try {
+      const res = await apiFetch('/auth/teacher/students/pending');
+      const students = await res.json();
+      if (!res.ok) return;
+
+      list.innerHTML = '';
+      if (students.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+
+      if (classes.length === 0) await loadClasses();
+
+      students.forEach(student => {
+        const row = document.createElement('div');
+        row.className = 'pending-row';
+        row.innerHTML = `
+          <div class="who">
+            <div class="name">${escapeHtml(student.full_name)}</div>
+            <div class="email">${escapeHtml(student.email)}</div>
+          </div>
+          <div class="assign-controls">
+            <select id="class-select-${student.id}">
+              <option value="">Assign to class…</option>
+              ${classes.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}
+            </select>
+            <button class="btn btn-ghost" data-reject-student="${student.id}">Reject</button>
+            <button class="btn btn-primary" data-approve-student="${student.id}">Approve & Assign</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      document.querySelectorAll('[data-approve-student]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const studentId = btn.dataset.approveStudent;
+          const classId = document.getElementById(`class-select-${studentId}`).value;
+          if (!classId) return;
+          btn.disabled = true;
+          await apiFetch(`/auth/teacher/students/${studentId}/approve`, { method: 'POST', body: { classId } });
+          loadPendingStudents();
+        });
+      });
+
+      document.querySelectorAll('[data-reject-student]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          await apiFetch(`/auth/teacher/students/${btn.dataset.rejectStudent}/reject`, { method: 'POST' });
+          loadPendingStudents();
+        });
+      });
+    } catch (err) {
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  async function loadMyStudents() {
+    const list = document.getElementById('myStudentsList');
+    list.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading students…</div>';
+
+    try {
+      const res = await apiFetch('/auth/teacher/students/approved');
+      const students = await res.json();
+      if (!res.ok) return;
+
+      list.innerHTML = '';
+      if (students.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>You do not have any approved students yet.</p></div>';
+        return;
+      }
+
+      students.forEach(student => {
+        const row = document.createElement('div');
+        row.className = 'pending-row'; 
+        row.innerHTML = `
+          <div class="who">
+            <div class="name">${escapeHtml(student.full_name)}</div>
+            <div class="email">${escapeHtml(student.email)}</div>
+          </div>
+          <div class="assign-controls" style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+            <span style="color: var(--dawn-gold); font-size: 0.85rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em;">Approved Status: Active</span>
+            <button class="btn-icon danger" style="padding: 4px 8px; font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px;" data-revoke-student="${student.id}">
+               Revoke Approval
+            </button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      document.querySelectorAll('[data-revoke-student]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm("Are you sure you want to revoke this student's approval?")) return;
+          btn.disabled = true;
+          await apiFetch(`/auth/teacher/students/${btn.dataset.revokeStudent}/revoke`, { method: 'POST' });
+          loadMyStudents(); 
+          loadPendingStudents();
+        });
+      });
+    } catch (err) {
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  if (user) loadClasses();
+</script>
+
+</body>
+</html>

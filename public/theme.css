@@ -1,0 +1,156 @@
+/* ============================================================
+   public/css/theme.css
+   Shared "pre-dawn sky" visual theme for NEW_DAWN_COMPANION.
+   ============================================================ */
+
+:root {
+  --ink-950: #0E1226;
+  --ink-900: #151A34;
+  --ink-800: #1D2444;
+  --line: #333c6e;
+  --text-primary: #F1EFEA;
+  --text-muted: #9AA0C8;
+  --dawn-gold: #E8A33D;
+  --dawn-rose: #E0716B;
+  --dawn-violet: #6E6BC7;
+  --success: #6FBF8B;
+  --success-bg: rgba(111, 191, 139, 0.1);
+  --danger: #E0716B;
+  --danger-bg: rgba(224, 113, 107, 0.1);
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ink-950);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+.dawn-line {
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--dawn-violet), var(--dawn-rose), var(--dawn-gold));
+  border-radius: 2px;
+}
+
+.brand { font-family: var(--font-display); font-size: 1.3rem; }
+.brand span { color: var(--dawn-gold); }
+
+.btn {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary { background: var(--dawn-gold); color: var(--ink-950); }
+.btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text-primary);
+}
+.btn-ghost:hover:not(:disabled) { border-color: var(--dawn-gold); color: var(--dawn-gold); }
+
+.btn-danger { background: var(--dawn-rose); color: var(--ink-950); }
+.btn-danger:hover:not(:disabled) { opacity: 0.9; }
+
+.card {
+  background: var(--ink-900);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--ink-950);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: 2px solid var(--dawn-gold);
+  outline-offset: 1px;
+}
+.field textarea { min-height: 120px; resize: vertical; }
+
+.banner {
+  display: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  margin-bottom: 16px;
+}
+.banner.error { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
+.banner.success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--line);
+}
+
+.top-bar-right { display: flex; align-items: center; gap: 16px; }
+.user-chip {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.empty-state {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.empty-state p { margin-bottom: 14px; font-size: 0.9rem; }
+
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--line);
+  border-top-color: var(--dawn-gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 20px 0;
+}

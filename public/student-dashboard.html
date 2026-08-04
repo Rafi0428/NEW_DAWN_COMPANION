@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard — NEW_DAWN_COMPANION</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  main { max-width: 800px; margin: 0 auto; padding: 32px 24px 80px; }
+  h1 { font-family: var(--font-display); font-size: 1.9rem; margin-bottom: 4px; }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .tab {
+    background: none; border: none; color: var(--text-muted); padding: 10px 4px;
+    margin-right: 20px; font-family: var(--font-mono); font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab.active { color: var(--dawn-gold); border-bottom-color: var(--dawn-gold); }
+
+  /* View Management */
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Navigation Cards */
+  .nav-card {
+    background: var(--ink-800); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between;
+    align-items: center; cursor: pointer; transition: all 0.2s ease;
+  }
+  .nav-card:hover { background: var(--ink-700); border-color: var(--dawn-gold); }
+  .nav-card-title { font-weight: bold; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+  .nav-card-arrow { color: var(--dawn-gold); font-size: 0.9rem; }
+
+  /* Specific Sections */
+  .class-section { margin-bottom: 32px; }
+  .class-header { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); color: var(--text-muted); }
+
+  .back-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; padding: 0; }
+  .back-btn:hover { color: var(--dawn-gold); }
+
+  /* GRADEBOOK TABLE STYLES */
+  .gradebook-container {
+    background: var(--ink-900);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow-x: auto;
+  }
+  .gradebook-table { width: 100%; text-align: left; border-collapse: collapse; }
+  .gradebook-table th {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--ink-950);
+  }
+  .gradebook-table td { padding: 16px 20px; border-bottom: 1px solid var(--ink-800); }
+  .gradebook-table tr:last-child td { border-bottom: none; }
+  .gradebook-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">new<span>_</span>dawn <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-mono);">STUDENT</span></div>
+  <div class="top-bar-right">
+    <span class="user-chip" id="userChip"></span>
+    <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+  </div>
+</div>
+
+<main>
+  <div class="tabs" id="mainTabs">
+    <button class="tab active" data-view="classesView">My Classes</button>
+    <button class="tab" data-view="gradesView">My Grades</button>
+  </div>
+
+  <div id="actionBanner" class="banner"></div>
+
+  <!-- VIEW 1: CLASSES & SEMESTERS -->
+  <div id="classesView" class="view active">
+    <h1>My Classes</h1>
+    <p class="subtitle">Select a semester to view your subjects.</p>
+    <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+    <!-- NEW: JOIN CLASS SECTION -->
+    <div class="dashboard-section" style="margin-bottom: 32px; padding: 20px; background: var(--ink-900); border: 1px solid var(--line); border-radius: var(--radius);">
+      <h2 style="font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 8px;">Join a New Class</h2>
+      <p class="section-subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Enter the 6-character code provided by your teacher.</p>
+      
+      <div style="display: flex; gap: 12px; max-width: 400px;">
+        <input type="text" id="joinCodeInput" placeholder="e.g., ENG11X" style="flex: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--ink-950); color: white; text-transform: uppercase;">
+        <button id="joinClassBtn" class="btn btn-primary">Join Class</button>
+      </div>
+      
+      <div id="joinMessage" style="margin-top: 12px; font-size: 0.9rem; display: none;"></div>
+    </div>
+    <!-- END JOIN CLASS SECTION -->
+
+    <div id="loadingRow" class="loading-row"><span class="spinner"></span> Loading your classes…</div>
+    <div id="classesContainer"></div>
+    <div class="empty-state" id="noClasses" style="display:none;">
+      <p>You are not currently assigned to any classes.</p>
+    </div>
+  </div>
+
+  <!-- VIEW 2: SUBJECTS -->
+  <div id="subjectsView" class="view">
+    <button class="back-btn" onclick="showView('classesView')">← Back to Semesters</button>
+    <h1 id="subjectsTitle">Subjects</h1>
+    <p class="subtitle">Select a subject to view its chapters.</p>
+    <div class="dawn-line"></div>
+    <div id="subjectsContainer"></div>
+  </div>
+
+  <!-- VIEW 3: CHAPTERS -->
+  <div id="chaptersView" class="view">
+    <button class="back-btn" onclick="showView('subjectsView')">← Back to Subjects</button>
+    <h1 id="chaptersTitle">Chapters</h1>
+    <p class="subtitle">Select a chapter to access study materials and quizzes.</p>
+    <div class="dawn-line"></div>
+    <div id="chaptersContainer"></div>
+  </div>
+
+  <!-- VIEW 4: MY GRADES -->
+  <div id="gradesView" class="view">
+    <h1>My Grades</h1>
+    <p class="subtitle">Review your past quiz attempts and scores.</p>
+    <div class="dawn-line" style="margin-bottom: 24px;"></div>
+    
+    <div class="gradebook-container" id="gradesContainer" style="display: none;">
+      <table class="gradebook-table">
+        <thead>
+          <tr>
+            <th>Quiz Details</th>
+            <th>Score</th>
+            <th>Submitted At</th>
+          </tr>
+        </thead>
+        <tbody id="gradesTableBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="noGrades" style="display:none;">
+      <p>You haven't completed any quizzes yet.</p>
+    </div>
+  </div>
+
+</main>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth(['student']);
+  if (user) document.getElementById('userChip').textContent = `${user.fullName} · Student`;
+  document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+  let currentClassId = null;
+
+  // Handle Tab Switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      const targetView = tab.dataset.view;
+      showView(targetView, false); // false = don't update tab UI again inside showView
+      
+      if (targetView === 'gradesView') loadGrades();
+      if (targetView === 'classesView') loadStudentData();
+    });
+  });
+
+  // View Manager
+  function showView(viewId, updateTabs = true) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    window.scrollTo(0, 0);
+
+    // If navigating deep into subjects/chapters, keep the 'My Classes' tab highlighted
+    if (updateTabs) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      if (viewId === 'classesView' || viewId === 'subjectsView' || viewId === 'chaptersView') {
+        document.querySelector('.tab[data-view="classesView"]').classList.add('active');
+      }
+    }
+  }
+
+  // --- JOIN CLASS LOGIC (NEW) ---
+  const joinBtn = document.getElementById('joinClassBtn');
+  const codeInput = document.getElementById('joinCodeInput');
+  const messageDiv = document.getElementById('joinMessage');
+
+  joinBtn.addEventListener('click', async () => {
+    const joinCode = codeInput.value.trim().toUpperCase();
+
+    if (!joinCode) {
+      showJoinMessage('Please enter a valid class code.', 'error');
+      return;
+    }
+
+    // Disable button while processing
+    joinBtn.disabled = true;
+    joinBtn.textContent = 'Joining...';
+
+    try {
+      // Assuming apiFetch automatically prepends '/api'
+      const res = await apiFetch('/enrollments/join', {
+        method: 'POST',
+        body: { joinCode } // <--- THE FIX: Just pass the object directly!
+      });
+      
+      const data = await res.json();
+
+      if (!res.ok) {
+        showJoinMessage(data.error || 'Failed to join class.', 'error');
+      } else {
+        showJoinMessage(data.message || 'Successfully joined!', 'success');
+        codeInput.value = ''; // Clear the input
+        
+        // Refresh the student's class list dynamically
+        loadStudentData(); 
+      }
+    } catch (err) {
+      console.error(err);
+      showJoinMessage('Could not reach the server.', 'error');
+    } finally {
+      // Re-enable button
+      joinBtn.disabled = false;
+      joinBtn.textContent = 'Join Class';
+    }
+  });
+
+  function showJoinMessage(text, type) {
+    messageDiv.style.display = 'block';
+    messageDiv.textContent = text;
+    if (type === 'error') {
+      messageDiv.style.color = '#f87171'; // Red
+    } else {
+      messageDiv.style.color = '#4ade80'; // Green
+    }
+    
+    // Hide the message after 4 seconds
+    setTimeout(() => {
+      messageDiv.style.display = 'none';
+    }, 4000);
+  }
+
+  // --- 1. LOAD CLASSES & SEMESTERS ---
+  async function loadStudentData() {
+    const container = document.getElementById('classesContainer');
+    const loadingRow = document.getElementById('loadingRow');
+    const noClasses = document.getElementById('noClasses');
+
+    container.innerHTML = '';
+    loadingRow.style.display = 'flex';
+    noClasses.style.display = 'none';
+
+    try {
+      const res = await apiFetch('/classes');
+      const classes = await res.json();
+      
+      loadingRow.style.display = 'none';
+
+      if (!res.ok) { showBanner('actionBanner', classes.error || 'Failed to load classes.'); return; }
+      if (!classes || classes.length === 0) { noClasses.style.display = 'block'; return; }
+
+      for (const cls of classes) {
+        const section = document.createElement('div');
+        section.className = 'class-section';
+        
+        let semestersHtml = '<div class="empty-state" style="padding: 16px;"><p>No semesters available.</p></div>';
+
+        try {
+          const semRes = await apiFetch(`/classes/${cls.id}/semesters`);
+          const semesters = await semRes.json();
+
+          if (semRes.ok && semesters.length > 0) {
+            semestersHtml = semesters.map(sem => `
+              <div class="nav-card" onclick="openSubjects('${sem.id}', '${escapeHtml(sem.name)}', '${cls.id}')">
+                <div class="nav-card-title">📚 ${escapeHtml(sem.name)}</div>
+                <div class="nav-card-arrow">▶</div>
+              </div>
+            `).join('');
+          }
+        } catch (e) { /* ignore */ }
+
+        section.innerHTML = `
+          <div class="class-header">${escapeHtml(cls.name)}</div>
+          ${semestersHtml}
+        `;
+        container.appendChild(section);
+      }
+    } catch (err) {
+      loadingRow.style.display = 'none';
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  // --- 2. LOAD SUBJECTS ---
+  async function openSubjects(semesterId, semesterName, classId) {
+    currentClassId = classId;
+    document.getElementById('subjectsTitle').textContent = semesterName;
+    const container = document.getElementById('subjectsContainer');
+    container.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading subjects…</div>';
+    
+    showView('subjectsView');
+
+    try {
+      const res = await apiFetch(`/semesters/${semesterId}/subjects?classId=${classId}`);
+      const subjects = await res.json();
+      
+      if (!res.ok || !subjects || subjects.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No subjects available in this semester.</p></div>';
+        return;
+      }
+
+      container.innerHTML = subjects.map(sub => `
+        <div class="nav-card" onclick="openChapters('${sub.id}', '${escapeHtml(sub.name)}')">
+          <div class="nav-card-title">📘 ${escapeHtml(sub.name)}</div>
+          <div class="nav-card-arrow">▶</div>
+        </div>
+      `).join('');
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state"><p style="color:var(--dawn-rose);">Failed to load subjects.</p></div>';
+    }
+  }
+
+  // --- 3. LOAD CHAPTERS ---
+  async function openChapters(subjectId, subjectName) {
+    document.getElementById('chaptersTitle').textContent = subjectName;
+    const container = document.getElementById('chaptersContainer');
+    container.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading chapters…</div>';
+    
+    showView('chaptersView');
+
+    try {
+      const res = await apiFetch(`/subjects/${subjectId}/chapters?classId=${currentClassId}`);
+      const chapters = await res.json();
+      
+      if (!res.ok || !chapters || chapters.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No chapters available yet.</p></div>';
+        return;
+      }
+
+      // REDIRECTS DIRECTLY TO CHAPTER HUB
+      container.innerHTML = chapters.map(ch => `
+        <div class="nav-card" onclick="window.location.href='chapter-viewer.html?chapterId=${ch.id}&classId=${currentClassId}'">
+          <div class="nav-card-title">📖 ${escapeHtml(ch.sequence_order)}. ${escapeHtml(ch.title)}</div>
+          <div class="nav-card-arrow">▶</div>
+        </div>
+      `).join('');
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state"><p style="color:var(--dawn-rose);">Failed to load chapters.</p></div>';
+    }
+  }
+
+  // --- 4. LOAD MY GRADES ---
+  async function loadGrades() {
+    const container = document.getElementById('gradesContainer');
+    const tbody = document.getElementById('gradesTableBody');
+    const emptyState = document.getElementById('noGrades');
+
+    tbody.innerHTML = '<tr><td colspan="3" class="loading-row"><span class="spinner"></span> Loading past attempts...</td></tr>';
+    container.style.display = 'block';
+    emptyState.style.display = 'none';
+
+    try {
+      const res = await apiFetch('/student/attempts');
+      const data = await res.json();
+
+      if (!res.ok) {
+        tbody.innerHTML = `<tr><td colspan="3" style="color: var(--dawn-rose);">Error: ${data.error || 'Failed to load grades.'}</td></tr>`;
+        return;
+      }
+
+      if (data.length === 0) {
+        container.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(attempt => {
+        const percentage = attempt.total_questions > 0 ? Math.round((attempt.score / attempt.total_questions) * 100) : 0;
+        const scoreColor = percentage >= 70 ? '#4ade80' : 'var(--dawn-rose)';
+        const date = new Date(attempt.submitted_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div style="font-weight: bold; color: var(--text-primary); font-family: var(--font-display); font-size: 1.05rem;">${escapeHtml(attempt.quiz_title)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(attempt.chapter_title)}</div>
+          </td>
+          <td>
+            <div style="font-family: var(--font-mono); font-size: 1.1rem; color: ${scoreColor}; font-weight: bold;">${percentage}%</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${attempt.score} / ${attempt.total_questions} correct</div>
+          </td>
+          <td style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono);">${date}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch(e) {
+       tbody.innerHTML = '<tr><td colspan="3" style="color: var(--dawn-rose);">Network error loading grades.</td></tr>';
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  if (user) loadStudentData();
+</script>
+
+</body>
+</html>

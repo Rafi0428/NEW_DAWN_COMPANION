@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — NEW_DAWN_COMPANION</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  main { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
+  h1 { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 6px; }
+  .subtitle { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 20px; }
+
+  /* Generalized list row for both pending and approved teachers */
+  .list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--ink-900);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .list-row .who { min-width: 200px; }
+  .list-row .name { font-family: var(--font-display); font-size: 1.05rem; }
+  .list-row .email { color: var(--text-muted); font-size: 0.82rem; }
+  .list-row .meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+  .list-row .actions { display: flex; gap: 8px; }
+
+  /* Specific styling for the revoke button */
+  .btn-danger { color: #630e0e; border-color: #f87171; }
+  .btn-danger:hover { background: #5d2828; color: #111; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">new<span>_</span>dawn <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-mono);">ADMIN</span></div>
+  <div class="top-bar-right">
+    <span class="user-chip" id="userChip"></span>
+    <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+  </div>
+</div>
+
+<main>
+  <!-- PENDING TEACHERS SECTION -->
+  <h1>Pending Teacher Accounts</h1>
+  <p class="subtitle">Review and approve Teachers before they can access the platform.</p>
+  <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+  <div id="actionBanner" class="banner"></div>
+  <div id="loadingRow" class="loading-row"><span class="spinner"></span> Loading pending teachers…</div>
+  <div id="pendingList"></div>
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <p>No pending Teacher applications right now.</p>
+  </div>
+
+  <!-- APPROVED TEACHERS SECTION -->
+  <h1 style="margin-top: 56px;">Approved Teacher Accounts</h1>
+  <p class="subtitle">Manage currently active teachers or revoke their platform access.</p>
+  <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+  <div id="loadingApprovedRow" class="loading-row"><span class="spinner"></span> Loading approved teachers…</div>
+  <div id="approvedList"></div>
+  <div id="emptyApprovedState" class="empty-state" style="display:none;">
+    <p>No active teacher accounts found on the platform.</p>
+  </div>
+</main>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth(['admin']);
+  if (user) {
+    document.getElementById('userChip').textContent = `${user.fullName} · Admin`;
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+  // --- PENDING TEACHERS LOGIC ---
+
+  async function loadPendingTeachers() {
+    document.getElementById('loadingRow').style.display = 'flex';
+    try {
+      const res = await apiFetch('/auth/admin/teachers/pending');
+      const teachers = await res.json();
+
+      document.getElementById('loadingRow').style.display = 'none';
+
+      if (!res.ok) {
+        showBanner('actionBanner', teachers.error || 'Failed to load pending teachers.');
+        return;
+      }
+
+      renderPendingList(teachers);
+    } catch (err) {
+      document.getElementById('loadingRow').style.display = 'none';
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  function renderPendingList(teachers) {
+    const list = document.getElementById('pendingList');
+    const emptyState = document.getElementById('emptyState');
+    list.innerHTML = '';
+
+    if (teachers.length === 0) {
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    teachers.forEach(teacher => {
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      row.innerHTML = `
+        <div class="who">
+          <div class="name">${escapeHtml(teacher.full_name)}</div>
+          <div class="email">${escapeHtml(teacher.email)}</div>
+          <div class="meta">Applied ${new Date(teacher.created_at).toLocaleDateString()}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost reject-btn" data-id="${teacher.id}">Reject</button>
+          <button class="btn btn-primary approve-btn" data-id="${teacher.id}">Approve</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleDecision(btn.dataset.id, 'approve', btn));
+    });
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleDecision(btn.dataset.id, 'reject', btn));
+    });
+  }
+
+  async function handleDecision(teacherId, decision, btn) {
+    btn.disabled = true;
+    hideBanner('actionBanner');
+    try {
+      const res = await apiFetch(`/auth/admin/teachers/${teacherId}/${decision}`, { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showBanner('actionBanner', data.error || `Failed to ${decision} teacher.`);
+        btn.disabled = false;
+        return;
+      }
+
+      showBanner('actionBanner', data.message, 'success');
+      
+      // Refresh both lists to update the UI
+      loadPendingTeachers();
+      loadApprovedTeachers();
+    } catch (err) {
+      showBanner('actionBanner', 'Could not reach the server.');
+      btn.disabled = false;
+    }
+  }
+
+  // --- APPROVED TEACHERS LOGIC ---
+
+  async function loadApprovedTeachers() {
+    document.getElementById('loadingApprovedRow').style.display = 'flex';
+    try {
+      const res = await apiFetch('/auth/admin/teachers/approved');
+      const teachers = await res.json();
+
+      document.getElementById('loadingApprovedRow').style.display = 'none';
+
+      if (!res.ok) {
+        showBanner('actionBanner', teachers.error || 'Failed to load approved teachers.');
+        return;
+      }
+
+      renderApprovedList(teachers);
+    } catch (err) {
+      document.getElementById('loadingApprovedRow').style.display = 'none';
+      showBanner('actionBanner', 'Could not reach the server.');
+    }
+  }
+
+  function renderApprovedList(teachers) {
+    const list = document.getElementById('approvedList');
+    const emptyState = document.getElementById('emptyApprovedState');
+    list.innerHTML = '';
+
+    if (teachers.length === 0) {
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    teachers.forEach(teacher => {
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      row.innerHTML = `
+        <div class="who">
+          <div class="name">${escapeHtml(teacher.full_name)}</div>
+          <div class="email">${escapeHtml(teacher.email)}</div>
+          <div class="meta">Approved on ${new Date(teacher.approved_at).toLocaleDateString()}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost btn-danger revoke-btn" data-id="${teacher.id}">Revoke Access</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    document.querySelectorAll('.revoke-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleRevoke(btn.dataset.id, btn));
+    });
+  }
+
+  async function handleRevoke(teacherId, btn) {
+    if (!confirm('Are you sure you want to revoke this teacher\'s approval? They will be immediately blocked from logging in.')) {
+        return;
+    }
+
+    btn.disabled = true;
+    hideBanner('actionBanner');
+    try {
+      const res = await apiFetch(`/auth/admin/teachers/${teacherId}/revoke`, { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showBanner('actionBanner', data.error || 'Failed to revoke teacher.');
+        btn.disabled = false;
+        return;
+      }
+
+      showBanner('actionBanner', data.message || 'Teacher access successfully revoked.', 'success');
+      
+      // Refresh both lists
+      loadPendingTeachers();
+      loadApprovedTeachers();
+    } catch (err) {
+      showBanner('actionBanner', 'Could not reach the server.');
+      btn.disabled = false;
+    }
+  }
+
+  // --- UTILS & INIT ---
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Initialize both sections on page load
+  if (user) {
+    loadPendingTeachers();
+    loadApprovedTeachers();
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — NEW_DAWN_COMPANION</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  main { max-width: 720px; margin: 0 auto; padding: 0 24px 100px; position: relative; }
+  
+  /* NEW: Sticky Timer Bar */
+  .timer-bar {
+    position: sticky;
+    top: 0;
+    background: rgba(10, 12, 26, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    padding: 16px 0;
+    margin-bottom: 24px;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .time-display {
+    color: var(--dawn-gold);
+    font-size: 1.3rem;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    transition: color 0.3s ease;
+  }
+  /* Turns red and pulses in the final 60 seconds */
+  .time-display.danger { 
+    color: var(--dawn-rose); 
+    animation: pulse 1s infinite; 
+  }
+  @keyframes pulse { 
+    0% { opacity: 1; } 
+    50% { opacity: 0.5; } 
+    100% { opacity: 1; } 
+  }
+
+  .breadcrumb { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+  h1 { font-family: var(--font-display); font-size: 1.7rem; margin: 8px 0 4px; }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+  /* Security Warning Banner */
+  .security-warning {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--dawn-rose);
+    color: var(--dawn-rose);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .security-warning strong { font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .progress-track {
+    height: 6px; background: var(--ink-800); border-radius: 3px; margin: 20px 0 28px; overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: var(--dawn-gold); border-radius: 3px; transition: width 0.2s ease; width: 0%; }
+
+  .question-card {
+    background: var(--ink-900); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 24px; margin-bottom: 16px;
+    user-select: none; /* Prevents text highlighting */
+  }
+  .question-number { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px; }
+  .question-text { font-family: var(--font-display); font-size: 1.1rem; line-height: 1.4; margin-bottom: 16px; }
+
+  .option-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px;
+    margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .option-row:hover { border-color: var(--dawn-gold); }
+  .option-row.selected { border-color: var(--dawn-gold); background: rgba(232,163,61,0.08); }
+  .option-row input[type="radio"] { accent-color: var(--dawn-gold); }
+  .option-row .letter {
+    font-family: var(--font-mono); font-size: 0.72rem; width: 22px; height: 22px; border-radius: 50%;
+    border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .option-row.selected .letter { border-color: var(--dawn-gold); color: var(--dawn-gold); }
+
+  .submit-bar {
+    position: sticky; bottom: 0; background: var(--ink-950);
+    padding: 20px 0; display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--line); margin-top: 24px;
+  }
+  .answered-count { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); }
+</style>
+</head>
+
+<!-- STRICT BLOCKS: Prevent right-click, copy, cut, and paste entirely -->
+<body oncontextmenu="return false;" oncopy="return false;" oncut="return false;" onpaste="return false;">
+
+<div class="top-bar">
+  <div class="brand">new<span>_</span>dawn <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-mono);">STUDENT</span></div>
+  <div class="top-bar-right">
+    <span class="user-chip" id="userChip"></span>
+    <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+  </div>
+</div>
+
+<main>
+  <!-- NEW: Timer UI Element -->
+  <div class="timer-bar" id="timerBar" style="display:none;">
+    <span>⏳ Time Remaining</span>
+    <span id="timeDisplay" class="time-display">--:--</span>
+  </div>
+
+  <div style="padding-top: 16px;">
+    <div class="breadcrumb" id="breadcrumb">Loading quiz…</div>
+    <h1 id="quizTitle">Chapter Quiz</h1>
+  </div>
+  
+  <div class="security-warning">
+    <span>🔒</span>
+    <div>
+      <strong>Anti-Cheat Active:</strong> 
+      Do not switch tabs, minimize this window, or attempt to copy text. Doing so will result in immediate auto-submission of your exam.
+    </div>
+  </div>
+
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div id="actionBanner" class="banner"></div>
+  <div id="loadingRow" class="loading-row"><span class="spinner"></span> Starting your attempt…</div>
+  
+  <div id="questionsContainer"></div>
+
+  <div class="submit-bar" id="submitBar" style="display:none;">
+    <span class="answered-count" id="answeredCount">0 of 0 answered</span>
+    <button class="btn btn-primary" id="submitBtn" onclick="submitQuiz(false)">Submit Quiz</button>
+  </div>
+</main>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth(['student']);
+  if (user) document.getElementById('userChip').textContent = `${user.fullName} · Student`;
+  document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+  const params = new URLSearchParams(window.location.search);
+  let quizId = params.get('quizId');
+
+  let questions = [];
+  const answers = {}; 
+  let isSubmitting = false; // Prevents double submission loops
+  
+  // Timer Variables
+  let timerInterval;
+  let secondsRemaining = 0;
+
+  if (!quizId) {
+      alert("No quiz selected.");
+      window.location.href = 'student-dashboard.html';
+  }
+
+  // --- ANTI-CHEAT KEYBOARD BLOCKS ---
+  document.addEventListener('keydown', (e) => {
+    // Block F12 (DevTools)
+    if (e.key === 'F12') { e.preventDefault(); }
+    
+    // Block combinations of Ctrl or Cmd
+    if (e.ctrlKey || e.metaKey) {
+      const forbidden = ['c', 'v', 'x', 'p', 's', 'i', 'j', 'u']; // copy, paste, cut, print, save, devtools, source
+      if (forbidden.includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        alert("Action denied. Keyboard shortcuts are disabled during active exams.");
+      }
+    }
+  });
+
+  // --- ANTI-CHEAT TAB SWITCH DETECTOR ---
+  document.addEventListener('visibilitychange', () => {
+    // If the document is hidden (user switched tabs, minimized, or opened another app)
+    // AND the exam has loaded, AND they haven't already submitted it.
+    if (document.visibilityState === 'hidden' && questions.length > 0 && !isSubmitting) {
+      alert("⚠️ ANTI-CHEAT TRIGGERED: You left the exam tab. Your quiz is being auto-submitted.");
+      submitQuiz(true); // Force auto-submit
+    }
+  });
+
+  async function init() {
+    try {
+      const res = await apiFetch(`/quizzes/${quizId}/take`);
+      const data = await res.json();
+
+      document.getElementById('loadingRow').style.display = 'none';
+
+      if (!res.ok) {
+        document.getElementById('actionBanner').textContent = data.error || 'Could not start the quiz.';
+        document.getElementById('actionBanner').style.display = 'block';
+        return;
+      }
+
+      questions = data.questions;
+      document.getElementById('quizTitle').textContent = data.quiz.title;
+      document.getElementById('breadcrumb').textContent = `Quiz · ${questions.length} questions`;
+
+      // Start the timer if the database provided a time limit
+      if (data.quiz.time_limit_minutes && data.quiz.time_limit_minutes > 0) {
+        startTimer(data.quiz.time_limit_minutes);
+      }
+
+      renderQuestions();
+    } catch (err) {
+      document.getElementById('loadingRow').style.display = 'none';
+      document.getElementById('actionBanner').textContent = 'Could not reach the server.';
+      document.getElementById('actionBanner').style.display = 'block';
+    }
+  }
+
+  // --- TIMER LOGIC ---
+  function startTimer(minutes) {
+    secondsRemaining = minutes * 60;
+    const display = document.getElementById('timeDisplay');
+    document.getElementById('timerBar').style.display = 'flex';
+
+    function updateDisplay() {
+        const m = Math.floor(secondsRemaining / 60);
+        const s = secondsRemaining % 60;
+        display.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        
+        // Turn red and pulse when 60 seconds or less remain
+        if (secondsRemaining <= 60 && secondsRemaining > 0) {
+            display.classList.add('danger');
+        }
+        
+        // Time is up!
+        if (secondsRemaining <= 0) {
+            clearInterval(timerInterval);
+            display.textContent = "00:00";
+            if (!isSubmitting) {
+                alert("⏳ Time is up! Your quiz is being automatically submitted.");
+                submitQuiz(true);
+            }
+        }
+    }
+
+    updateDisplay(); // Run once immediately so it doesn't wait 1 second to show up
+    
+    timerInterval = setInterval(() => {
+        secondsRemaining--;
+        updateDisplay();
+    }, 1000);
+  }
+
+  function renderQuestions() {
+    const container = document.getElementById('questionsContainer');
+    container.innerHTML = '';
+
+    questions.forEach((q, index) => {
+      const card = document.createElement('div');
+      card.className = 'question-card';
+      
+      const optionsMap = { 'A': q.option_a, 'B': q.option_b, 'C': q.option_c, 'D': q.option_d };
+
+      card.innerHTML = `
+        <div class="question-number">Question ${index + 1} of ${questions.length}</div>
+        <div class="question-text">${escapeHtml(q.question_text)}</div>
+        <div class="options" data-question="${q.id}">
+          ${['A','B','C','D'].filter(letter => optionsMap[letter]).map(letter => `
+            <label class="option-row" data-letter="${letter}">
+              <input type="radio" name="q-${q.id}" value="${letter}" style="display:none;">
+              <span class="letter">${letter}</span>
+              <span>${escapeHtml(optionsMap[letter])}</span>
+            </label>
+          `).join('')}
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    container.querySelectorAll('.option-row').forEach(row => {
+      row.addEventListener('click', () => {
+        if(isSubmitting) return; // Prevent changing answers while submitting
+
+        const group = row.closest('.options');
+        const questionId = group.dataset.question;
+        const letter = row.dataset.letter;
+
+        group.querySelectorAll('.option-row').forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+        row.querySelector('input').checked = true;
+
+        answers[questionId] = letter;
+        updateProgress();
+      });
+    });
+
+    document.getElementById('submitBar').style.display = 'flex';
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const answeredCount = Object.keys(answers).length;
+    const total = questions.length;
+    document.getElementById('answeredCount').textContent = `${answeredCount} of ${total} answered`;
+    document.getElementById('progressFill').style.width = `${(answeredCount / total) * 100}%`;
+  }
+
+  // Refactored to allow auto-submission from the Anti-Cheat trigger OR the Timer
+  async function submitQuiz(isAutoSubmit = false) {
+    if (isSubmitting) return; // Stop double-clicking
+
+    if (!isAutoSubmit && Object.keys(answers).length < questions.length) {
+      if (!confirm('You have unanswered questions. Submit anyway?')) return;
+    }
+
+    isSubmitting = true;
+    
+    // Stop the timer so it doesn't keep running in the background
+    if (timerInterval) clearInterval(timerInterval);
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = isAutoSubmit ? 'Auto-Submitting...' : 'Submitting…';
+
+    try {
+      const payload = { answers: answers };
+      const res = await apiFetch(`/quizzes/${quizId}/grade`, { method: 'POST', body: payload });
+      const data = await res.json();
+
+      if (!res.ok) {
+        document.getElementById('actionBanner').textContent = data.error || 'Failed to submit quiz.';
+        document.getElementById('actionBanner').style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Submit Quiz';
+        isSubmitting = false;
+        return;
+      }
+
+      data.questions_cache = questions;
+      sessionStorage.setItem('ndc_quizResults', JSON.stringify(data));
+      window.location.href = 'quiz-results.html';
+      
+    } catch (err) {
+      document.getElementById('actionBanner').textContent = 'Could not reach the server.';
+      document.getElementById('actionBanner').style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Quiz';
+      isSubmitting = false;
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  if (user) init();
+</script>
+
+</body>
+</html>

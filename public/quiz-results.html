@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Results — NEW_DAWN_COMPANION</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  main { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
+  .breadcrumb { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); }
+
+  .score-card {
+    background: var(--ink-900); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 32px; display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap; margin-top: 20px;
+  }
+  .score-headline h1 { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 6px; }
+  .score-headline p { color: var(--text-muted); font-size: 0.92rem; }
+
+  .score-ring { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring .bg { stroke: var(--ink-800); }
+  .score-ring .fg { stroke: var(--dawn-gold); stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .score-ring .value { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.5rem; }
+
+  .score-breakdown { display: flex; gap: 24px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .score-breakdown .stat { font-family: var(--font-mono); font-size: 0.8rem; }
+  .score-breakdown .stat .num { font-size: 1rem; margin-right: 4px; }
+  .stat.correct .num { color: #4ade80; }
+  .stat.wrong .num { color: var(--dawn-rose); }
+
+  .section-label { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); margin: 40px 0 16px; }
+
+  .question-card { background: var(--ink-900); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
+  .question-card.correct { border-left: 3px solid #4ade80; }
+  .question-card.wrong { border-left: 3px solid var(--dawn-rose); }
+  .question-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 22px 16px; gap: 16px; }
+  .question-number { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px; }
+  .question-text { font-family: var(--font-display); font-size: 1.05rem; line-height: 1.4; }
+
+  .status-pill { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .status-pill.correct { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+  .status-pill.wrong { background: rgba(220, 53, 69, 0.1); color: var(--dawn-rose); }
+
+  .options { padding: 0 22px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .option { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); font-size: 0.9rem; color: var(--text-muted); }
+  .option .letter { font-family: var(--font-mono); font-size: 0.75rem; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  
+  .option.is-correct-answer { border-color: #4ade80; color: var(--text-primary); background: rgba(74, 222, 128, 0.05); }
+  .option.is-correct-answer .letter { border-color: #4ade80; color: #4ade80; }
+  
+  .option.is-wrong-selection { border-color: var(--dawn-rose); color: var(--text-primary); background: rgba(220, 53, 69, 0.05); }
+  .option.is-wrong-selection .letter { border-color: var(--dawn-rose); color: var(--dawn-rose); }
+  
+  .option .tag { margin-left: auto; font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .option.is-correct-answer .tag { color: #4ade80; }
+  .option.is-wrong-selection .tag { color: var(--dawn-rose); }
+
+  .explanation { margin: 0 22px 22px; background: var(--ink-950); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; }
+  .explanation-label { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dawn-gold); margin-bottom: 8px; }
+  .explanation-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dawn-gold); }
+  .explanation p { font-size: 0.88rem; line-height: 1.55; color: var(--text-primary); }
+
+  .footer-actions { display: flex; gap: 12px; margin-top: 32px; justify-content: center; }
+
+  @media (max-width: 560px) {
+    .score-card { flex-direction: column; align-items: flex-start; }
+    .score-breakdown { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">new<span>_</span>dawn <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-mono);">STUDENT</span></div>
+  <div class="top-bar-right">
+    <span class="user-chip" id="userChip"></span>
+    <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+  </div>
+</div>
+
+<main>
+  <div class="breadcrumb"><a href="student-dashboard.html" style="color:var(--text-muted); text-decoration:none;">Dashboard</a> / Quiz Results</div>
+
+  <div id="noResults" class="empty-state" style="display:none; margin-top: 24px;">
+    <p>No quiz results found. Take a quiz first to see your results here.</p>
+    <button class="btn btn-primary" onclick="window.location.href='student-dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <div id="resultsContent" style="display:none;">
+    <div class="score-card">
+      <div class="score-headline">
+        <h1>Quiz complete</h1>
+        <p id="scoreSubtitle"></p>
+        <div class="score-breakdown">
+          <div class="stat correct"><span class="num" id="correctCount">0</span>correct</div>
+          <div class="stat wrong"><span class="num" id="wrongCount">0</span>incorrect</div>
+        </div>
+      </div>
+      <div class="score-ring">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle class="bg" cx="55" cy="55" r="46" fill="none" stroke-width="10" />
+          <circle class="fg" cx="55" cy="55" r="46" fill="none" stroke-width="10"
+                  stroke-dasharray="289" stroke-dashoffset="289" id="scoreRingFg" />
+        </svg>
+        <div class="value" id="scorePercent">0%</div>
+      </div>
+    </div>
+
+    <div class="section-label">Question review</div>
+    <div id="questionReview"></div>
+
+    <div class="footer-actions">
+      <button class="btn btn-ghost" onclick="window.location.href='student-dashboard.html'">Back to Dashboard</button>
+    </div>
+  </div>
+</main>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth(['student']);
+  if (user) document.getElementById('userChip').textContent = `${user.fullName} · Student`;
+  document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+  const raw = sessionStorage.getItem('ndc_quizResults');
+
+  if (!raw) {
+    document.getElementById('noResults').style.display = 'block';
+  } else {
+    const data = JSON.parse(raw);
+    renderResults(data);
+    sessionStorage.removeItem('ndc_quizResults');
+  }
+
+  function renderResults(data) {
+    const { score, totalQuestions, percentage, feedback, questions_cache } = data;
+    const wrong = totalQuestions - score;
+
+    document.getElementById('resultsContent').style.display = 'block';
+    document.getElementById('scoreSubtitle').textContent = `You answered ${score} of ${totalQuestions} questions correctly.`;
+    document.getElementById('correctCount').textContent = score;
+    document.getElementById('wrongCount').textContent = wrong;
+    document.getElementById('scorePercent').textContent = `${percentage}%`;
+
+    const circumference = 2 * Math.PI * 46; 
+    const offset = circumference - (percentage / 100) * circumference;
+    document.getElementById('scoreRingFg').setAttribute('stroke-dasharray', circumference);
+    document.getElementById('scoreRingFg').setAttribute('stroke-dashoffset', offset);
+
+    const container = document.getElementById('questionReview');
+    container.innerHTML = '';
+
+    feedback.forEach((fb, index) => {
+      // Find the original question text and options from the cache we passed over
+      const origQ = questions_cache.find(q => q.id === fb.question_id);
+      const optionsMap = { 'A': origQ.option_a, 'B': origQ.option_b, 'C': origQ.option_c, 'D': origQ.option_d };
+
+      const card = document.createElement('div');
+      card.className = `question-card ${fb.is_correct ? 'correct' : 'wrong'}`;
+
+      const optionsHtml = ['A', 'B', 'C', 'D'].filter(l => optionsMap[l]).map(letter => {
+        let cls = '';
+        let tag = '';
+        
+        if (letter === fb.correct_option) { 
+            cls = 'is-correct-answer'; 
+            tag = letter === fb.submitted_answer ? 'Your answer · Correct' : 'Correct answer'; 
+        } else if (letter === fb.submitted_answer) { 
+            cls = 'is-wrong-selection'; 
+            tag = 'Your answer'; 
+        }
+        
+        return `
+          <div class="option ${cls}">
+            <span class="letter">${letter}</span>
+            ${escapeHtml(optionsMap[letter])}
+            ${tag ? `<span class="tag">${tag}</span>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="question-header">
+          <div>
+            <div class="question-number">Question ${index + 1} of ${feedback.length}</div>
+            <div class="question-text">${escapeHtml(origQ.question_text)}</div>
+          </div>
+          <span class="status-pill ${fb.is_correct ? 'correct' : 'wrong'}">${fb.is_correct ? 'Correct' : 'Incorrect'}</span>
+        </div>
+        <div class="options">${optionsHtml}</div>
+        <div class="explanation">
+          <div class="explanation-label"><span class="dot"></span> AI Explanation</div>
+          <p>${escapeHtml(fb.explanation)}</p>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+
+</body>
+</html>

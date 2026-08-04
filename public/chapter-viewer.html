@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter Hub — NEW_DAWN_COMPANION</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  main { max-width: 900px; margin: 0 auto; padding: 32px 24px 100px; }
+  .breadcrumb { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px; }
+  .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .breadcrumb a:hover { color: var(--dawn-gold); }
+  
+  h1 { font-family: var(--font-display); font-size: 2rem; margin: 0 0 8px; color: var(--text-primary); }
+  .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 32px; }
+
+  .hub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 768px) {
+    .hub-grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--ink-900);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel h2 {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dawn-gold);
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--ink-800);
+    padding-bottom: 12px;
+  }
+
+  .item-list { display: flex; flex-direction: column; gap: 12px; }
+  
+  .material-card, .quiz-card {
+    background: var(--ink-950);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s;
+  }
+  .material-card:hover, .quiz-card:hover { border-color: var(--dawn-gold); }
+  
+  .card-info { display: flex; flex-direction: column; gap: 4px; }
+  .card-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--text-primary); }
+  .card-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+
+  /* --- STRICT READ-ONLY DOCUMENT MODAL --- */
+  .doc-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(10,12,26,0.95);
+    display: none; align-items: center; justify-content: center; z-index: 200;
+  }
+  .doc-modal-backdrop.open { display: flex; }
+  .doc-modal {
+    background: var(--ink-900); width: 95%; height: 95%; max-width: 1200px;
+    border: 1px solid var(--dawn-gold); border-radius: var(--radius);
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  }
+  .doc-modal-header {
+    padding: 16px 24px; background: var(--ink-950); border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .doc-modal-header h3 { margin: 0; font-family: var(--font-mono); font-size: 0.9rem; color: var(--dawn-gold); }
+  .doc-modal-body {
+    flex: 1; background: #e5e7eb;
+    position: relative;
+  }
+  .doc-modal-body iframe {
+    width: 100%; height: 100%; border: none;
+  }
+</style>
+</head>
+<body oncontextmenu="return false;">
+
+<div class="top-bar">
+  <div class="brand">new<span>_</span>dawn <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-mono);">STUDENT</span></div>
+  <div class="top-bar-right">
+    <span class="user-chip" id="userChip"></span>
+    <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+  </div>
+</div>
+
+<main>
+  <div class="breadcrumb">
+    <a href="student-dashboard.html">Dashboard</a> / <span id="breadChapter">Loading...</span>
+  </div>
+  
+  <h1 id="chapterTitle">Chapter Materials</h1>
+  <p class="subtitle">Review your study documents strictly in the browser before attempting the practice quizzes below.</p>
+
+  <div id="actionBanner" class="banner"></div>
+
+  <div class="hub-grid" id="hubContent" style="display: none;">
+    
+    <!-- Left Column: Documents -->
+    <div class="panel">
+      <h2>📚 Study Materials (Read-Only)</h2>
+      <div class="item-list" id="materialsList">
+        <div class="loading-row"><span class="spinner"></span> Loading documents...</div>
+      </div>
+    </div>
+
+    <!-- Right Column: Quizzes -->
+    <div class="panel">
+      <h2>📝 Practice Quizzes</h2>
+      <div class="item-list" id="quizzesList">
+        <div class="loading-row"><span class="spinner"></span> Loading quizzes...</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- READ-ONLY DOCUMENT VIEWER MODAL -->
+<div class="doc-modal-backdrop" id="docModalBackdrop">
+  <div class="doc-modal">
+    <div class="doc-modal-header">
+      <h3 id="docModalTitle">Reading Document...</h3>
+      <button class="btn btn-ghost" onclick="closeDocument()" style="color: var(--dawn-rose);">Close Viewer</button>
+    </div>
+    <div class="doc-modal-body">
+      <iframe id="docViewerIframe" src=""></iframe>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  const user = requireAuth(['student']);
+  if (user) document.getElementById('userChip').textContent = `${user.fullName} · Student`;
+  document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+  // Prevent keyboard shortcuts for saving/printing (Ctrl+S, Ctrl+P)
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'S' || e.key === 'P')) {
+      e.preventDefault();
+      alert('Downloading and printing are disabled for study materials.');
+    }
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const chapterId = params.get('chapterId');
+  const classId = params.get('classId'); 
+
+  // Strict check: Block empty values AND literal string words like "null" or "undefined"
+  if (!chapterId || !classId || classId === 'undefined' || classId === 'null') {
+    alert("Session data missing. Returning to dashboard to resync.");
+    window.location.href = 'student-dashboard.html';
+  } else {
+    if (user) loadChapterHub();
+  }
+
+  async function loadChapterHub() {
+    try {
+      const [matRes, quizRes] = await Promise.all([
+        apiFetch(`/chapters/${chapterId}/study-material?classId=${classId}`),
+        apiFetch(`/chapters/${chapterId}/quizzes?classId=${classId}`)
+      ]);
+
+      const materials = matRes.ok ? await matRes.json() : [];
+      const quizzes = quizRes.ok ? await quizRes.json() : [];
+
+      document.getElementById('hubContent').style.display = 'grid';
+      
+      const dynamicTitle = quizzes.length > 0 ? quizzes[0].title.split('—')[0].trim() : 'Chapter Hub';
+      document.getElementById('chapterTitle').textContent = dynamicTitle;
+      document.getElementById('breadChapter').textContent = dynamicTitle;
+
+      renderMaterials(materials);
+      renderQuizzes(quizzes);
+
+    } catch (err) {
+      showBanner('actionBanner', 'Failed to load chapter data from the server.');
+    }
+  }
+
+  function renderMaterials(materials) {
+    const list = document.getElementById('materialsList');
+    list.innerHTML = '';
+
+    if (materials.length === 0) {
+      list.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Your teacher has not uploaded any documents for this chapter yet.</p>';
+      return;
+    }
+
+    materials.forEach(m => {
+      const fileName = m.title || (m.content ? m.content.split('/').pop() : 'Document');
+      const ext = fileName.split('.').pop().toUpperCase();
+      
+      const card = document.createElement('div');
+      card.className = 'material-card';
+      card.innerHTML = `
+        <div class="card-info">
+          <div class="card-title">${escapeHtml(fileName)}</div>
+          <div class="card-meta">${ext} FILE</div>
+        </div>
+        <button class="btn btn-ghost" style="padding: 6px 12px; border: 1px solid var(--dawn-gold); color: var(--dawn-gold);" 
+                onclick="openDocument('${m.content}', '${escapeHtml(fileName)}', '${ext}')">Read</button>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  function renderQuizzes(quizzes) {
+    const list = document.getElementById('quizzesList');
+    list.innerHTML = '';
+
+    if (quizzes.length === 0) {
+      list.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No quizzes available for this chapter yet.</p>';
+      return;
+    }
+
+    quizzes.forEach((q, index) => {
+      const card = document.createElement('div');
+      card.className = 'quiz-card';
+      card.innerHTML = `
+        <div class="card-info">
+          <div class="card-title">Set ${index + 1}</div>
+          <div class="card-meta">⏱️ ${q.time_limit_minutes} MINUTES LIMIT</div>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href='quiz-taking.html?quizId=${q.id}&classId=${classId}'" style="background: var(--dawn-gold); color: var(--ink-900);">Start Quiz</button>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  // --- DOCUMENT VIEWER LOGIC ---
+  function openDocument(fileUrl, fileName, ext) {
+    const iframe = document.getElementById('docViewerIframe');
+    document.getElementById('docModalTitle').textContent = `Reading: ${fileName}`;
+    
+    let safeUrl = fileUrl;
+    
+    if (ext === 'PDF') {
+      safeUrl = `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
+    } else if (ext === 'DOC' || ext === 'DOCX') {
+      const absoluteUrl = window.location.origin + (fileUrl.startsWith('/') ? fileUrl : '/' + fileUrl);
+      safeUrl = `https://docs.google.com/gview?url=${encodeURIComponent(absoluteUrl)}&embedded=true`;
+    }
+
+    iframe.src = safeUrl;
+    document.getElementById('docModalBackdrop').classList.add('open');
+  }
+
+  function closeDocument() {
+    document.getElementById('docViewerIframe').src = '';
+    document.getElementById('docModalBackdrop').classList.remove('open');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  if (user) loadChapterHub();
+</script>
+
+</body>
+</html>

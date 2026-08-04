@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEW_DAWN_COMPANION</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .auth-shell {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .auth-shell .brand {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 1.6rem;
+  }
+  .auth-shell .tagline {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-bottom: 24px;
+  }
+
+  .tabs {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    background: var(--ink-900);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border: none;
+  }
+  .tab.active { background: var(--ink-800); color: var(--dawn-gold); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .role-select {
+    display: flex;
+    gap: 8px;
+  }
+  .role-option {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .role-option.selected { border-color: var(--dawn-gold); color: var(--dawn-gold); background: rgba(232,163,61,0.08); }
+
+  .admin-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  .submit-btn { width: 100%; padding: 12px; }
+</style>
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="brand">new<span>_</span>dawn</div>
+  <div class="tagline">NEW_DAWN_COMPANION — Learning Portal</div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="login">Log In</button>
+    <button class="tab" data-tab="signup">Sign Up</button>
+  </div>
+
+  <div id="loginBanner" class="banner"></div>
+
+  <!-- ---------------- LOGIN ---------------- -->
+  <div class="panel active card" id="loginPanel">
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary submit-btn" id="loginBtn">Log in</button>
+    </form>
+  </div>
+
+  <!-- ---------------- SIGNUP ---------------- -->
+  <div class="panel card" id="signupPanel">
+    <div id="signupBanner" class="banner"></div>
+    <form id="signupForm">
+      <div class="field">
+        <label for="signupName">Full name</label>
+        <input type="text" id="signupName" required>
+      </div>
+      <div class="field">
+        <label for="signupEmail">Email</label>
+        <input type="email" id="signupEmail" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="signupPassword">Password</label>
+        <input type="password" id="signupPassword" required minlength="8" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>I am a...</label>
+        <div class="role-select">
+          <div class="role-option selected" data-role="teacher">Teacher</div>
+          <div class="role-option" data-role="student">Student</div>
+        </div>
+        <input type="hidden" id="signupRole" value="teacher">
+        <p class="admin-note">Admin accounts aren't self-registered — they're provisioned directly by NEW_DAWN_COMPANION staff. Teacher accounts require Admin approval; Student accounts require Teacher approval and class assignment.</p>
+      </div>
+      <button type="submit" class="btn btn-primary submit-btn" id="signupBtn">Create account</button>
+    </form>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  // ---------------- Tab switching ----------------
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`${tab.dataset.tab}Panel`).classList.add('active');
+    });
+  });
+
+  // ---------------- Role picker ----------------
+  document.querySelectorAll('.role-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      document.getElementById('signupRole').value = opt.dataset.role;
+    });
+  });
+
+  // ---------------- Login ----------------
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideBanner('loginBanner');
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = 'Logging in…';
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('loginEmail').value.trim(),
+          password: document.getElementById('loginPassword').value,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showBanner('loginBanner', data.error || 'Login failed.');
+        return;
+      }
+
+      Auth.setToken(data.accessToken);
+      Auth.setUser(data.user);
+      window.location.href = dashboardPathFor(data.user.role);
+    } catch (err) {
+      showBanner('loginBanner', 'Could not reach the server. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Log in';
+    }
+  });
+
+  // ---------------- Signup ----------------
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideBanner('signupBanner');
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: document.getElementById('signupName').value.trim(),
+          email: document.getElementById('signupEmail').value.trim(),
+          password: document.getElementById('signupPassword').value,
+          role: document.getElementById('signupRole').value,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showBanner('signupBanner', data.error || 'Signup failed.');
+        return;
+      }
+
+      showBanner('signupBanner', data.message, 'success');
+      document.getElementById('signupForm').reset();
+    } catch (err) {
+      showBanner('signupBanner', 'Could not reach the server. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create account';
+    }
+  });
+
+  // If already logged in, skip straight to the right dashboard.
+  (function redirectIfLoggedIn() {
+    const user = Auth.getUser();
+    if (user && Auth.getToken()) {
+      window.location.href = dashboardPathFor(user.role);
+    }
+  })();
+</script>
+
+</body>
+</html>
