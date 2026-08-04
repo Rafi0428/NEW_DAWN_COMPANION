@@ -7,40 +7,62 @@
 <link rel="stylesheet" href="theme.css">
 <style>
   main { max-width: 800px; margin: 0 auto; padding: 32px 24px 80px; }
-  h1 { font-family: var(--font-display); font-size: 1.9rem; margin-bottom: 4px; }
-  .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+  h1 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 4px; background: linear-gradient(135deg, var(--text-primary) 50%, var(--dawn-violet) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 28px; }
 
   /* Tabs */
-  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 28px; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
   .tab {
-    background: none; border: none; color: var(--text-muted); padding: 10px 4px;
-    margin-right: 20px; font-family: var(--font-mono); font-size: 0.8rem;
+    background: none; border: none; color: var(--text-muted); padding: 10px 16px;
+    margin-right: 8px; font-family: var(--font-mono); font-size: 0.8rem;
     text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
     border-bottom: 2px solid transparent;
+    transition: var(--transition-smooth);
+    border-radius: 6px 6px 0 0;
   }
-  .tab.active { color: var(--dawn-gold); border-bottom-color: var(--dawn-gold); }
+  .tab:hover:not(.active) { color: var(--text-primary); background: rgba(255, 255, 255, 0.02); }
+  .tab.active { color: var(--dawn-gold); border-bottom-color: var(--dawn-gold); text-shadow: 0 0 10px rgba(255, 179, 71, 0.2); }
 
   /* View Management */
   .view { display: none; }
-  .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .view.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   /* Navigation Cards */
   .nav-card {
-    background: var(--ink-800); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between;
-    align-items: center; cursor: pointer; transition: all 0.2s ease;
+    background: var(--ink-900); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 24px; margin-bottom: 14px; display: flex; justify-content: space-between;
+    align-items: center; cursor: pointer; transition: var(--transition-smooth);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
-  .nav-card:hover { background: var(--ink-700); border-color: var(--dawn-gold); }
-  .nav-card-title { font-weight: bold; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
-  .nav-card-arrow { color: var(--dawn-gold); font-size: 0.9rem; }
+  .nav-card:hover { 
+    background: var(--ink-800); 
+    border-color: rgba(138, 126, 240, 0.35); 
+    transform: translateY(-2px) translateX(4px);
+    box-shadow: 0 8px 25px rgba(138, 126, 240, 0.12);
+  }
+  .nav-card-title { font-weight: bold; font-size: 1.08rem; color: var(--text-primary); display: flex; align-items: center; gap: 12px; font-family: var(--font-display); }
+  .nav-card-arrow { color: var(--dawn-gold); font-size: 0.95rem; transition: transform 0.25s ease; }
+  .nav-card:hover .nav-card-arrow { transform: translateX(4px); }
 
   /* Specific Sections */
-  .class-section { margin-bottom: 32px; }
-  .class-header { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); color: var(--text-muted); }
+  .class-section { margin-bottom: 36px; }
+  .class-header { 
+    font-family: var(--font-display); 
+    font-size: 1.3rem; 
+    margin-bottom: 16px; 
+    padding-bottom: 8px; 
+    border-bottom: 1px solid var(--line); 
+    color: var(--text-primary);
+  }
 
-  .back-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; padding: 0; }
-  .back-btn:hover { color: var(--dawn-gold); }
+  .back-btn { 
+    background: transparent; border: none; color: var(--text-muted); font-size: 0.88rem; 
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px; 
+    margin-bottom: 24px; padding: 6px 12px; border-radius: 6px;
+    border: 1px solid transparent; transition: var(--transition-smooth);
+  }
+  .back-btn:hover { color: var(--dawn-gold); border-color: rgba(255, 179, 71, 0.15); background: rgba(255, 179, 71, 0.03); }
 
   /* GRADEBOOK TABLE STYLES */
   .gradebook-container {
@@ -48,21 +70,24 @@
     border: 1px solid var(--line);
     border-radius: var(--radius);
     overflow-x: auto;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
   .gradebook-table { width: 100%; text-align: left; border-collapse: collapse; }
   .gradebook-table th {
-    padding: 16px 20px;
+    padding: 18px 20px;
     border-bottom: 1px solid var(--line);
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--dawn-gold);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    background: var(--ink-950);
+    letter-spacing: 0.08em;
+    background: rgba(6, 8, 20, 0.4);
   }
-  .gradebook-table td { padding: 16px 20px; border-bottom: 1px solid var(--ink-800); }
+  .gradebook-table td { padding: 16px 20px; border-bottom: 1px solid rgba(138, 126, 240, 0.1); color: var(--text-primary); }
   .gradebook-table tr:last-child td { border-bottom: none; }
-  .gradebook-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+  .gradebook-table tr:hover { background: rgba(138, 126, 240, 0.03); }
 </style>
 </head>
 <body>

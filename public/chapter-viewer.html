@@ -7,11 +7,11 @@
 <link rel="stylesheet" href="theme.css">
 <style>
   main { max-width: 900px; margin: 0 auto; padding: 32px 24px 100px; }
-  .breadcrumb { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px; }
-  .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
-  .breadcrumb a:hover { color: var(--dawn-gold); }
+  .breadcrumb { font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.02em; }
+  .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: var(--transition-smooth); }
+  .breadcrumb a:hover { color: var(--dawn-gold); text-shadow: 0 0 8px rgba(255, 179, 71, 0.2); }
   
-  h1 { font-family: var(--font-display); font-size: 2rem; margin: 0 0 8px; color: var(--text-primary); }
+  h1 { font-family: var(--font-display); font-size: 2.2rem; margin: 0 0 8px; background: linear-gradient(135deg, var(--text-primary) 50%, var(--dawn-violet) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 32px; }
 
   .hub-grid {
@@ -30,53 +30,67 @@
     padding: 24px;
     display: flex;
     flex-direction: column;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
   .panel h2 {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     color: var(--dawn-gold);
-    margin-bottom: 16px;
-    border-bottom: 1px solid var(--ink-800);
-    padding-bottom: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(138, 126, 240, 0.15);
+    padding-bottom: 14px;
   }
 
   .item-list { display: flex; flex-direction: column; gap: 12px; }
   
   .material-card, .quiz-card {
-    background: var(--ink-950);
+    background: rgba(6, 8, 20, 0.35);
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 16px;
+    padding: 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: border-color 0.2s;
+    transition: var(--transition-smooth);
   }
-  .material-card:hover, .quiz-card:hover { border-color: var(--dawn-gold); }
+  .material-card:hover, .quiz-card:hover {
+    border-color: var(--dawn-gold);
+    background: rgba(6, 8, 20, 0.55);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 179, 71, 0.1);
+  }
   
   .card-info { display: flex; flex-direction: column; gap: 4px; }
-  .card-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--text-primary); }
-  .card-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+  .card-title { font-family: var(--font-display); font-size: 1.08rem; color: var(--text-primary); font-weight: 600; }
+  .card-meta { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted); }
 
   /* --- STRICT READ-ONLY DOCUMENT MODAL --- */
   .doc-modal-backdrop {
-    position: fixed; inset: 0; background: rgba(10,12,26,0.95);
+    position: fixed; inset: 0; background: rgba(4, 5, 12, 0.85);
     display: none; align-items: center; justify-content: center; z-index: 200;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    animation: backdropFade 0.3s ease;
   }
+  @keyframes backdropFade { from { opacity: 0; } to { opacity: 1; } }
   .doc-modal-backdrop.open { display: flex; }
   .doc-modal {
-    background: var(--ink-900); width: 95%; height: 95%; max-width: 1200px;
-    border: 1px solid var(--dawn-gold); border-radius: var(--radius);
+    background: var(--ink-950); width: 95%; height: 95%; max-width: 1200px;
+    border: 1px solid var(--line); border-radius: var(--radius);
     display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  @keyframes modalSlide { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .doc-modal-header {
-    padding: 16px 24px; background: var(--ink-950); border-bottom: 1px solid var(--line);
+    padding: 16px 24px; background: rgba(6, 8, 20, 0.6); border-bottom: 1px solid var(--line);
     display: flex; justify-content: space-between; align-items: center;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
-  .doc-modal-header h3 { margin: 0; font-family: var(--font-mono); font-size: 0.9rem; color: var(--dawn-gold); }
+  .doc-modal-header h3 { margin: 0; font-family: var(--font-mono); font-size: 0.85rem; color: var(--dawn-gold); letter-spacing: 0.05em; }
   .doc-modal-body {
     flex: 1; background: #e5e7eb;
     position: relative;

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <style>
   main { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
-  h1 { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 6px; }
+  h1 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 6px; background: linear-gradient(135deg, var(--text-primary) 50%, var(--dawn-violet) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .subtitle { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 20px; }
 
   /* Generalized list row for both pending and approved teachers */
@@ -15,23 +15,39 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: 18px 24px;
     background: var(--ink-900);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     margin-bottom: 12px;
     gap: 16px;
     flex-wrap: wrap;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: var(--transition-smooth);
+  }
+  .list-row:hover {
+    border-color: rgba(138, 126, 240, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(138, 126, 240, 0.1);
   }
   .list-row .who { min-width: 200px; }
-  .list-row .name { font-family: var(--font-display); font-size: 1.05rem; }
-  .list-row .email { color: var(--text-muted); font-size: 0.82rem; }
-  .list-row .meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+  .list-row .name { font-family: var(--font-display); font-size: 1.1rem; color: var(--text-primary); }
+  .list-row .email { color: var(--text-muted); font-size: 0.82rem; margin-top: 2px; }
+  .list-row .meta { font-family: var(--font-mono); font-size: 0.74rem; color: var(--dawn-violet); margin-top: 6px; letter-spacing: 0.02em; }
   .list-row .actions { display: flex; gap: 8px; }
 
   /* Specific styling for the revoke button */
-  .btn-danger { color: #630e0e; border-color: #f87171; }
-  .btn-danger:hover { background: #5d2828; color: #111; }
+  .btn-danger { 
+    background: rgba(255, 117, 117, 0.06);
+    border: 1px solid rgba(255, 117, 117, 0.3);
+    color: var(--dawn-rose);
+  }
+  .btn-danger:hover { 
+    background: var(--dawn-rose); 
+    color: #060813; 
+    box-shadow: 0 0 15px rgba(255, 117, 117, 0.3);
+  }
 </style>
 </head>
 <body>
