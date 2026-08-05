@@ -327,7 +327,7 @@
             transform: translate(-50%, -50%);
             width: 60vw;
             height: 60vw;
-            background: radial-gradient(circle, rgba(138, 126, 240, 0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(137, 126, 240, 0.166) 0%, transparent 70%);
             filter: blur(80px);
             z-index: 0;
             pointer-events: none;
@@ -410,6 +410,151 @@
             font-size: 0.8rem;
             color: #a0a3b5;
             line-height: 1.7;
+        }
+        /* =========================================
+           7. TEACHERS SECTION
+           ========================================= */
+        .teachers-section {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            background-color: #060813;
+            padding: 100px 5vw;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .teachers-container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .teachers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 30px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* The Card Layout (Modeled after reference image) */
+        .teacher-card {
+            position: relative;
+            height: 400px; /* Tall portrait style */
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .teacher-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+            border-color: rgba(255, 179, 71, 0.3);
+        }
+
+        /* The graphic tab on the left side */
+        .card-accent {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 45%;
+            height: 100%;
+            background: linear-gradient(180deg, #6582d42e, #2a0bc452); /* Dawn Fire */
+            border-radius: 20px 0 0 20px;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        /* The sideways text inside the graphic tab */
+        .card-accent-text {
+            position: absolute;
+            bottom: 30px;
+            left: 45px;
+            transform: rotate(-90deg);
+            transform-origin: left bottom;
+            color: rgba(0, 0, 0, 0.2); /* Deep shadow text */
+            font-family: 'Fraunces', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            white-space: nowrap;
+            letter-spacing: 3px;
+        }
+
+        /* The Teacher Photo Placeholder */
+        .teacher-img {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            z-index: 2;
+        }
+
+        /* The colored gradient at the bottom mimicking the reference image */
+        .teacher-info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 100px 20px 20px 20px;
+            /* CHANGED: Now uses a rich crimson color that fades up, instead of dark black */
+            background: linear-gradient(to top, #4352b57b 5%, rgba(61, 84, 148, 0.63) 40%, transparent 100%);
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        
+        .teacher-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+        }
+
+        .teacher-qual {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #e2e4f0;
+            line-height: 1.5;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+        }
+
+        /* --- THE ADMIN 'ADD' CARD --- */
+        .add-teacher-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.01);
+            border: 2px dashed rgba(255, 179, 71, 0.3);
+            cursor: pointer;
+        }
+        
+        .add-teacher-card:hover {
+            background: rgba(255, 179, 71, 0.05);
+            border: 2px dashed rgba(255, 179, 71, 1);
+        }
+
+        .add-icon {
+            font-size: 4rem;
+            color: #FFB347;
+            margin-bottom: 15px;
+            transition: transform 0.4s ease;
+        }
+
+        .add-teacher-card:hover .add-icon {
+            transform: scale(1.2) rotate(90deg);
         }
     </style>
 </head>
@@ -557,6 +702,73 @@
         </div>
 
     </section>
+
+    <!-- TEACHERS SECTION -->
+    <section class="teachers-section" id="teachers">
+        
+        <div class="teachers-container scroll-reveal">
+            
+            <!-- Section Header -->
+            <div class="features-header">
+                <h2 class="section-title">OUR TEACHERS</h2>
+                <div class="accent-line center-line"></div>
+            </div>
+
+            <!-- The Grid matching the reference image layout -->
+            <div class="teachers-grid">
+                
+                <!-- Educator 1: Shama Parween -->
+                <div class="teacher-card">
+                    <!-- The left accent shape -->
+                    <div class="card-accent">
+                        <span class="card-accent-text">Educators</span>
+                    </div>
+                    <!-- Add the teacher's transparent PNG image here later -->
+                    <img src="" alt="" class="teacher-img">
+                    
+                    <!-- Text Overlay -->
+                    <div class="teacher-info-overlay">
+                        <h3 class="teacher-name">Shama Parween</h3>
+                        <p class="teacher-qual">B.Sc. & M.Sc. in Geography<br>M.A. in Political Science<br>B.Ed., D.El.Ed.<br>CTET & WBTET Qualified</p>
+                    </div>
+                </div>
+
+                <!-- Educator 2: Fayek Qamar -->
+                <div class="teacher-card">
+                    <div class="card-accent">
+                        <span class="card-accent-text">Educators</span>
+                    </div>
+                    <img src="" alt="" class="teacher-img">
+                    <div class="teacher-info-overlay">
+                        <h3 class="teacher-name">Fayek Qamar</h3>
+                        <p class="teacher-qual">B.A. in Political Science<br>M.A. in History<br>M.A. in Political Science</p>
+                    </div>
+                </div>
+
+                <!-- Educator 3: Sania Parween -->
+                <div class="teacher-card">
+                    <div class="card-accent">
+                        <span class="card-accent-text">Educators</span>
+                    </div>
+                    <img src="" alt="" class="teacher-img">
+                    <div class="teacher-info-overlay">
+                        <h3 class="teacher-name">Sania Parween</h3>
+                        <p class="teacher-qual">B.A. LL.B.</p>
+                    </div>
+                </div>
+
+                <!-- ADMIN ONLY: Add Educator Card -->
+                <div class="teacher-card add-teacher-card">
+                    <div class="add-icon">+</div>
+                    <h3 class="teacher-name">Add Educator</h3>
+                    <p class="teacher-qual" style="color: #FFB347;">Admin Dashboard Only</p>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+
     <!-- THE BRAINS (JAVASCRIPT) -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
