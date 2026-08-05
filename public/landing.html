@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Dawn | Welcome</title>
+    
+    <!-- Importing Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Link to your existing global theme -->
+    <link rel="stylesheet" href="theme.css">
+
+    <style>
+        /* BASE RESETS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #060813; /* Deep twilight */
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 1. THE HERO VIDEO SECTION */
+        .hero-section {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* The video fills the screen and centers the sun */
+        #hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center;
+            z-index: 0;
+        }
+
+        /* 2. THE GLASS NAVIGATION BAR */
+        .glass-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            z-index: 100;
+            background: rgba(6, 8, 19, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(138, 126, 240, 0.15);
+            /* Hidden initially until video ends */
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+        }
+
+        .glass-nav a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: Sentence case;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .glass-nav a:hover {
+            color: #FFB347; /* Dawn gold */
+            text-shadow: 0 0 10px rgba(255, 179, 71, 0.5);
+        }
+
+        /* 3. THE CINEMATIC REVEAL CONTENT */
+        .hero-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            /* Hidden initially */
+            opacity: 0;
+            transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Typography framing the sun perfectly in the vertical center */
+        .title-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 52%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            /* Widened to 45vw to ensure it completely clears the massive sun */
+            gap: 30vw; 
+        }
+
+        .title-word {
+            font-family: 'Fraunces', serif;
+            font-size: 8vw;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 4px;
+            text-shadow: 0 10px 40px rgba(0,0,0,0.9);
+            /* Initial state for animation */
+            transform: scale(0.95);
+            transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* 4. CAPTION & CALL TO ACTION (Bottom of screen) */
+        .bottom-content {
+            position: absolute;
+            bottom: 12%; /* Anchors elements safely below the sun */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            text-align: center;
+        }
+
+        .caption-text {
+            color: #f1efec; /* Dawn gold to match buttons */
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+            /* Initial state for animation */
+            transform: translateY(10px);
+            transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .cta-wrapper {
+            display: flex;
+            gap: 20px;
+        }
+
+        .glass-btn {
+            padding: 16px 45px;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-start {
+            background: linear-gradient(90deg, #FFB347, #FF6B6B);
+            border: none;
+            color: #000;
+            box-shadow: 0 4px 20px rgba(255, 179, 71, 0.4);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 179, 71, 0.7);
+        }
+
+        .btn-login {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #8A7EF0;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(138, 126, 240, 0.3);
+        }
+
+        /* JS Activation Classes */
+        .reveal-active {
+            opacity: 1 !important;
+        }
+        .reveal-active .title-word {
+            transform: scale(1) !important;
+        }
+        .reveal-active .caption-text {
+            transform: translateY(0) !important;
+        }
+        /* =========================================
+           5. CINEMATIC ABOUT SECTION
+           ========================================= */
+        /* Styling for the new About bullet points */
+        .about-list {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            color: #e2e4f0;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            padding-left: 30px; /* Indents the bullets nicely */
+            font-weight: 400;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+        }
+
+        .about-list li {
+            margin-bottom: 10px;
+        }
+        
+        .about-list li::marker {
+            color: #FFB347; /* Makes the bullet dots dawn-gold */
+        }
+
+        .about-section {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Aligns text to the left */
+            overflow: hidden;
+            background-color: #060813;
+        }
+
+        /* Stretches the image/gif to cover the whole screen */
+        .about-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center right; /* Keeps the main part of the black hole on the right */
+            z-index: 1;
+        }
+
+        /* Creates a smooth fade from solid dark on the left, to transparent on the right */
+        .about-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #060813 15%, rgba(6,8,19,0.7) 45%, transparent 100%);
+            z-index: 2;
+        }
+
+        /* Borderless, floating text container */
+        .about-content {
+            position: relative;
+            z-index: 3;
+            max-width: 800px;
+            padding-left: 8vw;
+            padding-right: 20px;
+        }
+
+        .section-title {
+            font-family: 'Fraunces', serif;
+            font-size: 2.5vw; /* Scales beautifully with screen size */
+            color: #ffffff;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .accent-line {
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #FFB347, #FF6B6B);
+            margin-bottom: 40px;
+            border-radius: 2px;
+            box-shadow: 0 0 15px rgba(255, 179, 71, 0.6);
+        }
+
+        .about-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #e2e4f0;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            font-weight: 400;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+        }
+
+        /* --- THE SCROLL ANIMATION CLASSES --- */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(60px); /* Starts lower down */
+            transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .scroll-reveal.active {
+            opacity: 1;
+            transform: translateY(0); /* Glides into place */
+        }
+        /* =========================================
+           6. FEATURES SECTION
+           ========================================= */
+        .features-section {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #060813;
+            padding: 100px 5vw;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        /* Creates a massive, subtle glowing orb behind the grid */
+        .features-ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(138, 126, 240, 0.08) 0%, transparent 70%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .features-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .center-line {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* The Grid Layout */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            width: 100%;
+        }
+
+        /* Holographic Glass Cards */
+        .glass-feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 50px 30px;
+            text-align: center;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            /* Adds a subtle inner glow */
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.01);
+        }
+
+        .glass-feature-card:hover {
+            transform: translateY(-15px);
+            border-color: rgba(255, 179, 71, 0.5); /* Ignites the border with dawn gold */
+            box-shadow: 0 20px 50px rgba(255, 179, 71, 0.15), inset 0 0 20px rgba(255, 179, 71, 0.05);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 25px;
+            /* Makes the emoji hover slightly */
+            transition: transform 0.4s ease;
+        }
+
+        .glass-feature-card:hover .feature-icon {
+            transform: scale(1.1) translateY(-5px);
+        }
+
+        .feature-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            color: #ffffff;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .feature-desc {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            color: #a0a3b5;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- STICKY GLASS NAVBAR -->
+    <nav class="glass-nav" id="main-nav">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#features">Features</a>
+        <a href="#teachers">Teachers</a>
+        <a href="#toppers">Toppers</a>
+        <a href="#faq">FaQ</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero-section" id="home">
+        <!-- Make sure the video file name matches perfectly -->
+        <video id="hero-video" autoplay muted playsinline>
+            <source src="From Klickpin.com- Fresh side hustle ideas that help you create a polished look with very simple and affordable details for anyone who wants easy_1.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <!-- UI OVERLAY -->
+        <div class="hero-content" id="hero-ui">
+            
+            <!-- Center Typography framing the sun -->
+            <div class="title-wrapper">
+                <h1 class="title-word">NEW</h1>
+                <h1 class="title-word">DAWN</h1>
+            </div>
+
+            <!-- Bottom Content: Caption and Buttons -->
+            <div class="bottom-content">
+                <h2 class="caption-text">Learn from a topper, become a topper</h2>
+                <div class="cta-wrapper">
+                    <!-- Connect these hrefs to your actual routes -->
+                    <a href="/login" style="text-decoration: none;"><button class="glass-btn btn-login">Login</button></a>
+                    <a href="/dashboard" style="text-decoration: none;"><button class="glass-btn btn-start">Start</button></a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+    <!-- ABOUT SECTION -->
+    <!-- FULL-BLEED CINEMATIC ABOUT SECTION -->
+    <section class="about-section" id="about">
+        
+        <!-- The Background Visual -->
+        <!-- NOTE: If your file is actually a GIF, change .jpg to .gif here -->
+        <img src="black hole.gif" alt="Black Hole Background" class="about-bg">
+        
+        <!-- The Shadow Gradient (blends the image into the dark background) -->
+        <div class="about-overlay"></div>
+
+        <!-- The Floating Text Content -->
+        <div class="about-content scroll-reveal">
+            <h2 class="section-title">ABOUT</h2>
+            <div class="accent-line"></div>
+            
+            <p class="about-text">
+                Welcome to our website for Class XI and Class XII students of the West Bengal Council of Higher Secondary Education (WBCHSE) following the semester-wise system.
+            </p>
+
+            <p class="about-text">
+                This platform provides study materials for Arts subjects, including Political Science, Geography, History, and other subjects.
+            </p>
+
+            <p class="about-text" style="margin-bottom: 10px;">
+                On our website, you will find:
+            </p>
+
+            <!-- Custom List for your bullet points -->
+            <ul class="about-list">
+                <li>Chapter-wise PDF notes</li>
+                <li>Practice quizzes with chapter-wise MCQs</li>
+                <li>Mock tests based on the WBCHSE semester pattern</li>
+                <li>Performance tracking to help you monitor your progress</li>
+            </ul>
+
+            <p class="about-text">
+                Our content is prepared in a simple and easy-to-understand format, making revision faster and more effective. Whether you are preparing for semester examinations, class tests, or final assessments, our goal is to provide everything you need in one place.
+            </p>
+
+            <p class="about-text">
+                We believe that quality education should be accessible to every student. Our platform is committed to providing reliable, syllabus-based study materials that improve understanding, build confidence, and support academic success through regular practice.
+            </p>
+        </div>
+
+    </section>
+   <!-- FEATURES SECTION -->
+    <section class="features-section" id="features">
+        
+        <!-- Ambient background lighting -->
+        <div class="features-ambient-glow"></div>
+
+        <div class="features-container scroll-reveal">
+            <!-- Section Header -->
+            <div class="features-header">
+                <h2 class="section-title">FEATURES</h2>
+                <div class="accent-line center-line"></div>
+            </div>
+
+            <!-- The Glassmorphic Grid -->
+            <div class="features-grid">
+                
+                <!-- Feature 1 -->
+                <div class="glass-feature-card">
+                    <h3 class="feature-title">📚 Chapter-wise PDF Notes</h3>
+                    <p class="feature-desc">Easy-to-understand notes for every chapter based on the latest WBCHSE semester syllabus.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-feature-card">
+                    <h3 class="feature-title">📝 Practice Quizzes</h3><br><br>
+                    <p class="feature-desc">Chapter-wise MCQs to test your understanding and strengthen your concepts.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-feature-card">
+                    <h3 class="feature-title">🎯 Semester Mock Tests</h3>
+                    <p class="feature-desc">Full-length mock tests designed according to the WBCHSE semester examination pattern.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-feature-card">
+                    <h3 class="feature-title">📄 Previous Year Papers</h3><br>
+                    <p class="feature-desc">Access previous years' question papers to understand the exam pattern and practice effectively.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass-feature-card">
+                    <h3 class="feature-title">📑 Model Question Papers</h3>
+                    <p class="feature-desc">Practice with model question papers prepared according to the latest WBCHSE semester syllabus.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass-feature-card">
+                    <h3 class="feature-title">📊 Performance Tracking</h3>
+                    <p class="feature-desc">Track your quiz and mock test scores to monitor your progress and identify areas for improvement.</p>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+    <!-- THE BRAINS (JAVASCRIPT) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const video = document.getElementById("hero-video");
+            const heroUI = document.getElementById("hero-ui");
+            const nav = document.getElementById("main-nav");
+
+            // Listen for the exact millisecond the video stops playing
+            video.addEventListener("ended", () => {
+                heroUI.classList.add("reveal-active");
+                
+                setTimeout(() => {
+                    nav.classList.add("reveal-active");
+                    nav.style.transform = "translateY(0)";
+                }, 500); 
+            });
+
+            // Failsafe: Force the UI to appear after 10 seconds if video blocked
+            setTimeout(() => {
+                if(!heroUI.classList.contains("reveal-active")) {
+                    heroUI.classList.add("reveal-active");
+                    nav.classList.add("reveal-active");
+                    nav.style.transform = "translateY(0)";
+                }
+            }, 10000);
+        });
+        // --- SCROLL REVEAL ANIMATION OBSERVER ---
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.3 // Triggers when 30% of the section is visible
+        };
+
+        const scrollObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target); // Stops it from animating repeatedly
+                }
+            });
+        }, observerOptions);
+
+        // Find anything with the 'scroll-reveal' class and watch it
+        document.querySelectorAll('.scroll-reveal').forEach(element => {
+            scrollObserver.observe(element);
+        });
+    </script>
+</body>
+</html>
