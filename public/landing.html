@@ -678,6 +678,119 @@
                 font-size: 1.6rem;
             }
         }
+        /* =========================================
+           9. FAQ SECTION
+           ========================================= */
+        .faq-section {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            background-color: #060813;
+            padding: 100px 5vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .faq-ambient-glow {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(255, 107, 107, 0.05) 0%, transparent 70%); /* Crimson glow */
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .faq-container {
+            max-width: 900px; /* Kept narrow for better readability */
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .faq-accordion {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .faq-item {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden; /* Keeps the expanding answer contained */
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active {
+            border-color: rgba(255, 179, 71, 0.5); /* Illuminates the border when opened */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 179, 71, 0.05);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .faq-question {
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .faq-question h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0;
+            padding-right: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .faq-item.active .faq-question h3 {
+            color: #FFB347; /* Turns text dawn-gold when active */
+        }
+
+        .faq-toggle {
+            font-size: 1.8rem;
+            color: #FFB347;
+            font-weight: 300;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Rotates the '+' into an 'x' when opened */
+        .faq-item.active .faq-toggle {
+            transform: rotate(45deg);
+            color: #FF6B6B; /* Shifts to crimson */
+        }
+
+        .faq-answer {
+            max-height: 0;
+            opacity: 0;
+            padding: 0 30px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 200px; /* Expands to show text */
+            opacity: 1;
+            padding: 0 30px 30px 30px;
+        }
+
+        .faq-answer p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #a0a3b5;
+            line-height: 1.7;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -986,7 +1099,70 @@
 
         </div>
     </section>
-    
+    <!-- FAQ SECTION -->
+    <section class="faq-section" id="faq">
+        
+        <!-- Subtle crimson background glow -->
+        <div class="faq-ambient-glow"></div>
+
+        <div class="faq-container scroll-reveal">
+            
+            <!-- Section Header -->
+            <div class="features-header">
+                <h2 class="section-title">FAQ</h2>
+                <div class="accent-line center-line"></div>
+            </div>
+
+            <!-- The Accordion List -->
+            <div class="faq-accordion">
+                
+                <!-- Question 1 -->
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Is the study material aligned with the new WBCHSE semester system?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, absolutely. All our PDF notes, mock tests, and practice quizzes are strictly updated and mapped to the latest WBCHSE semester-wise syllabus.</p>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Can I access the platform on my mobile phone?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Our platform is fully responsive and optimized for all devices. You can seamlessly study, take tests, and check analytics on your smartphone, tablet, or laptop.</p>
+                    </div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How does the performance tracking work?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Every time you take a quiz or mock test, our engine logs your scores. Your dashboard will show you visual analytics of your progress, highlighting strong subjects and pinpointing areas that need more revision.</p>
+                    </div>
+                </div>
+
+                <!-- Question 4 -->
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Are the mock tests timed?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, the semester mock tests are designed to simulate the real examination environment, complete with strict timers and our military-grade anti-cheat engine.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
 
     <!-- THE BRAINS (JAVASCRIPT) -->
     <script>
