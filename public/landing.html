@@ -557,17 +557,17 @@
             transform: scale(1.2) rotate(90deg);
         }
         /* =========================================
-           8. TOPPERS SECTION (Pill Layout)
+           8. TOPPERS SECTION (Compact 5-Column Pill Layout)
            ========================================= */
         .toppers-section {
             position: relative;
             width: 100vw;
             min-height: 100vh;
-            background-color: #0a0d1f;
-            padding: 100px 5vw;
+            background-color: #0a0e1f;
+            padding: 80px 4vw; /* Slightly tighter padding on the sides */
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Ensures content starts at top and flows down */
+            align-items: flex-start; 
             overflow: hidden;
             z-index: 10;
         }
@@ -586,47 +586,47 @@
         }
 
         .toppers-container {
-            max-width: 1200px;
+            max-width: 1400px; /* Widened to comfortably fit 5 columns */
             width: 100%;
             position: relative;
             z-index: 2;
         }
 
         .topper-year-group {
-            margin-bottom: 60px; /* Spacing between years */
+            margin-bottom: 40px; /* Tighter vertical spacing between years */
             width: 100%;
         }
 
-        /* --- Centered Year Pill --- */
+        /* --- Centered Year Pill (Smaller) --- */
         .year-pill-wrapper {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Tighter gap below the year */
         }
 
         .year-pill {
             font-family: 'Fraunces', serif;
-            font-size: 2rem;
+            font-size: 1.4rem; /* Scaled down */
             color: #ffffff;
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 179, 71, 0.4);
-            padding: 12px 80px;
-            border-radius: 50px; /* Makes it a pill shape */
+            padding: 8px 50px; /* Slimmer padding */
+            border-radius: 40px;
             letter-spacing: 2px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(255, 179, 71, 0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(255, 179, 71, 0.1);
         }
 
-        /* --- 3-Column Student Grid --- */
+        /* --- 5-Column Student Grid --- */
         .toppers-pill-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Exactly 3 per row */
-            gap: 25px;
+            grid-template-columns: repeat(5, 1fr); /* Forces exactly 5 per row */
+            gap: 15px; /* Tighter gaps between pills */
             width: 100%;
         }
 
-        /* --- Individual Student Pill --- */
+        /* --- Individual Student Pill (Compact) --- */
         .student-pill {
             display: flex;
             justify-content: space-between;
@@ -635,47 +635,58 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 18px 30px;
-            border-radius: 50px; /* Pill shape matching the design */
+            padding: 12px 18px; /* Slimmer profile */
+            border-radius: 30px; 
             transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .student-pill:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px); /* Subtle hover lift */
             border-color: rgba(255, 179, 71, 0.6);
-            box-shadow: 0 10px 25px rgba(255, 179, 71, 0.15);
+            box-shadow: 0 8px 20px rgba(255, 179, 71, 0.15);
             background: rgba(255, 255, 255, 0.05);
         }
 
         .student-name {
             font-family: 'Inter', sans-serif;
-            font-size: 1.1rem;
+            font-size: 0.85rem; /* Scaled down for 5 columns */
             font-weight: 600;
             color: #e2e4f0;
+            white-space: nowrap; /* Prevents long names from breaking into two lines */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Adds '...' if a name is too long */
+            margin-right: 10px;
         }
 
         .student-marks {
             font-family: 'Inter', sans-serif;
-            font-size: 1.15rem;
+            font-size: 0.95rem; /* Scaled down */
             font-weight: 700;
-            color: #FFB347; /* Dawn gold for emphasis */
+            color: #FFB347;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         /* --- Mobile Responsiveness --- */
-        @media (max-width: 1024px) {
+        /* Smoothly drops the column count on smaller screens so text remains readable */
+        @media (max-width: 1200px) {
             .toppers-pill-grid {
-                grid-template-columns: repeat(2, 1fr); /* 2 columns on tablets */
+                grid-template-columns: repeat(4, 1fr);
             }
         }
-        
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .toppers-pill-grid {
-                grid-template-columns: 1fr; /* 1 column on phones */
+                grid-template-columns: repeat(3, 1fr);
             }
-            .year-pill {
-                padding: 10px 50px;
-                font-size: 1.6rem;
+        }
+        @media (max-width: 650px) {
+            .toppers-pill-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 400px) {
+            .toppers-pill-grid {
+                grid-template-columns: 1fr;
             }
         }
         /* =========================================
@@ -685,7 +696,7 @@
             position: relative;
             width: 100vw;
             min-height: 100vh;
-            background-color: #060813;
+            background-color: #090c1c;
             padding: 100px 5vw;
             display: flex;
             justify-content: center;
@@ -790,6 +801,215 @@
             color: #a0a3b5;
             line-height: 1.7;
             margin: 0;
+        }
+        /* =========================================
+           10. SUBSCRIPTION SECTION
+           ========================================= */
+        .subscription-section {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            background-color: #070a19;
+            padding: 100px 5vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .subs-ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, rgba(255, 179, 71, 0.05) 0%, transparent 60%);
+            filter: blur(90px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .subs-container {
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .subs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+            align-items: center; /* Aligns cards in the middle */
+        }
+
+        /* Base Glass Pricing Card */
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 50px 30px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.4s ease, border-color 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 179, 71, 0.4);
+        }
+
+        /* Highlighted Premium Card */
+        .premium-card {
+            border: 1px solid rgba(255, 179, 71, 0.4);
+            background: linear-gradient(180deg, rgba(255, 179, 71, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+            box-shadow: 0 15px 40px rgba(255, 179, 71, 0.1);
+            transform: scale(1.05); /* Makes it slightly larger */
+        }
+
+        .premium-card:hover {
+            transform: scale(1.05) translateY(-10px);
+            border-color: rgba(255, 179, 71, 0.8);
+            box-shadow: 0 20px 50px rgba(255, 179, 71, 0.2);
+        }
+
+        .premium-badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #FFB347, #FF6B6B);
+            color: #000;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            padding: 8px 20px;
+            border-radius: 30px;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(255, 179, 71, 0.4);
+        }
+
+        .plan-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #e2e4f0;
+            margin-bottom: 20px;
+        }
+
+        .plan-price {
+            font-family: 'Fraunces', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 30px;
+        }
+
+        .price-duration {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #a0a3b5;
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 40px 0;
+            text-align: left;
+            flex-grow: 1; /* Pushes the button to the bottom */
+        }
+
+        .plan-features li {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #a0a3b5;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        /* Custom checkmarks for the list */
+        .plan-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #FFB347;
+            font-weight: 900;
+        }
+
+        /* Cinematic Buttons */
+        .subs-btn {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .subs-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #ffffff;
+        }
+
+        .premium-btn {
+            background: linear-gradient(90deg, #FFB347, #FF6B6B);
+            color: #000;
+            border: none;
+        }
+
+        .premium-btn:hover {
+            background: linear-gradient(90deg, #ffc266, #ff8080);
+            box-shadow: 0 5px 20px rgba(255, 179, 71, 0.4);
+            border-color: transparent;
+        }
+
+        /* Payment Methods Footer */
+        .payment-methods-banner {
+            margin-top: 60px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .payment-methods-banner p {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #e2e4f0;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .payment-types {
+            color: #a0a3b5;
+            font-size: 0.85rem;
+        }
+
+        /* Mobile Dropdown Fix */
+        @media (max-width: 900px) {
+            .premium-card {
+                transform: scale(1);
+            }
+            .premium-card:hover {
+                transform: translateY(-10px);
+            }
         }
     </style>
 </head>
@@ -1024,7 +1244,7 @@
                     <h3 class="year-pill">2026</h3>
                 </div>
                 
-                <!-- 3-Column Grid for Students -->
+                <!-- 5-Column Grid for Students -->
                 <div class="toppers-pill-grid">
                     
                     <div class="student-pill">
@@ -1045,6 +1265,11 @@
                     <div class="student-pill">
                         <span class="student-name">Vikram Singh</span>
                         <span class="student-marks">95.4%</span>
+                    </div>
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Neha Ali</span>
+                        <span class="student-marks">94.9%</span>
                     </div>
 
                 </div>
@@ -1161,6 +1386,72 @@
                 </div>
 
             </div>
+        </div>
+    </section>
+    <!-- SUBSCRIPTION SECTION (Not in Navbar) -->
+    <section class="subscription-section" id="subscription">
+        
+        <!-- Subtle golden background glow -->
+        <div class="subs-ambient-glow"></div>
+
+        <div class="subs-container scroll-reveal">
+            
+            <!-- Section Header -->
+            <div class="features-header">
+                <h2 class="section-title">CHOOSE YOUR PATH</h2>
+                <div class="accent-line center-line"></div>
+            </div>
+
+            <!-- The Pricing Grid -->
+            <div class="subs-grid">
+                
+                <!-- 1. Monthly Subscription -->
+                <div class="pricing-card">
+                    <h3 class="plan-title">Monthly</h3>
+                    <div class="plan-price">₹299<span class="price-duration">/mo</span></div>
+                    <ul class="plan-features">
+                        <li>Access to Chapter-wise PDF Notes</li>
+                        <li>Daily Practice Quizzes</li>
+                        <li>Standard Performance Tracking</li>
+                    </ul>
+                    <button class="subs-btn">Select Plan</button>
+                </div>
+
+                <!-- 2. Quarterly Subscription -->
+                <div class="pricing-card">
+                    <h3 class="plan-title">Quarterly</h3>
+                    <div class="plan-price">₹799<span class="price-duration">/3 mos</span></div>
+                    <ul class="plan-features">
+                        <li>Everything in Monthly</li>
+                        <li>Full Semester Mock Tests</li>
+                        <li>Detailed Analytics Dashboard</li>
+                    </ul>
+                    <button class="subs-btn">Select Plan</button>
+                </div>
+
+                <!-- 3. Full Course Subscription (Highlighted) -->
+                <div class="pricing-card premium-card">
+                    <div class="premium-badge">BEST VALUE</div>
+                    <h3 class="plan-title">Full Course</h3>
+                    <div class="plan-price">₹2,499<span class="price-duration">/full</span></div>
+                    <ul class="plan-features">
+                        <li>Everything in Quarterly</li>
+                        <li>All Previous Year & Model Papers</li>
+                        <li>Priority Server Access & Support</li>
+                        <li>Complete WBCHSE Syllabus</li>
+                    </ul>
+                    <button class="subs-btn premium-btn">Select Plan</button>
+                </div>
+
+            </div>
+
+            <!-- Payment Methods Banner (Admin Editable) -->
+            <div class="payment-methods-banner">
+                <span class="payment-icon">🔒</span>
+                <p>Secure checkout powered by <strong>Razorpay</strong>. <br>
+                <span class="payment-types">Accepting UPI, RuPay, Visa, MasterCard, and NetBanking.</span></p>
+            </div>
+
         </div>
     </section>
 
