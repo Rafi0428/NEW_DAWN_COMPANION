@@ -418,7 +418,7 @@
             position: relative;
             width: 100vw;
             min-height: 100vh;
-            background-color: #060813;
+            background-color: #090d1e;
             padding: 100px 5vw;
             display: flex;
             justify-content: center;
@@ -555,6 +555,128 @@
 
         .add-teacher-card:hover .add-icon {
             transform: scale(1.2) rotate(90deg);
+        }
+        /* =========================================
+           8. TOPPERS SECTION (Pill Layout)
+           ========================================= */
+        .toppers-section {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            background-color: #0a0d1f;
+            padding: 100px 5vw;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Ensures content starts at top and flows down */
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .toppers-ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(255, 179, 71, 0.05) 0%, transparent 70%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .toppers-container {
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .topper-year-group {
+            margin-bottom: 60px; /* Spacing between years */
+            width: 100%;
+        }
+
+        /* --- Centered Year Pill --- */
+        .year-pill-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .year-pill {
+            font-family: 'Fraunces', serif;
+            font-size: 2rem;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 179, 71, 0.4);
+            padding: 12px 80px;
+            border-radius: 50px; /* Makes it a pill shape */
+            letter-spacing: 2px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(255, 179, 71, 0.1);
+        }
+
+        /* --- 3-Column Student Grid --- */
+        .toppers-pill-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Exactly 3 per row */
+            gap: 25px;
+            width: 100%;
+        }
+
+        /* --- Individual Student Pill --- */
+        .student-pill {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 18px 30px;
+            border-radius: 50px; /* Pill shape matching the design */
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .student-pill:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 179, 71, 0.6);
+            box-shadow: 0 10px 25px rgba(255, 179, 71, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .student-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #e2e4f0;
+        }
+
+        .student-marks {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #FFB347; /* Dawn gold for emphasis */
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 1024px) {
+            .toppers-pill-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 columns on tablets */
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .toppers-pill-grid {
+                grid-template-columns: 1fr; /* 1 column on phones */
+            }
+            .year-pill {
+                padding: 10px 50px;
+                font-size: 1.6rem;
+            }
         }
     </style>
 </head>
@@ -768,6 +890,103 @@
         </div>
 
     </section>
+    <!-- TOPPERS SECTION -->
+    <section class="toppers-section" id="toppers">
+        
+        <!-- Subtle golden background glow -->
+        <div class="toppers-ambient-glow"></div>
+
+        <div class="toppers-container scroll-reveal">
+            
+            <!-- Section Header -->
+            <div class="features-header">
+                <h2 class="section-title">OUR TOPPERS</h2>
+                <div class="accent-line center-line"></div>
+            </div>
+
+            <!-- === 2026 BATCH === -->
+            <div class="topper-year-group">
+                <!-- Centered Year Pill -->
+                <div class="year-pill-wrapper">
+                    <h3 class="year-pill">2026</h3>
+                </div>
+                
+                <!-- 3-Column Grid for Students -->
+                <div class="toppers-pill-grid">
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Aisha Rahman</span>
+                        <span class="student-marks">98.5%</span>
+                    </div>
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Rohan Das</span>
+                        <span class="student-marks">97.2%</span>
+                    </div>
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Priya Sen</span>
+                        <span class="student-marks">96.8%</span>
+                    </div>
+
+                    <div class="student-pill">
+                        <span class="student-name">Vikram Singh</span>
+                        <span class="student-marks">95.4%</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- === 2025 BATCH === -->
+            <div class="topper-year-group">
+                <div class="year-pill-wrapper">
+                    <h3 class="year-pill">2025</h3>
+                </div>
+                
+                <div class="toppers-pill-grid">
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Karan Patel</span>
+                        <span class="student-marks">99.1%</span>
+                    </div>
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Sneha Roy</span>
+                        <span class="student-marks">96.5%</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- === 2024 BATCH === -->
+            <div class="topper-year-group">
+                <div class="year-pill-wrapper">
+                    <h3 class="year-pill">2024</h3>
+                </div>
+                
+                <div class="toppers-pill-grid">
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Amit Sharma</span>
+                        <span class="student-marks">97.8%</span>
+                    </div>
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Nisha Gupta</span>
+                        <span class="student-marks">96.1%</span>
+                    </div>
+                    
+                    <div class="student-pill">
+                        <span class="student-name">Rahul Verma</span>
+                        <span class="student-marks">95.0%</span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+    
 
     <!-- THE BRAINS (JAVASCRIPT) -->
     <script>
