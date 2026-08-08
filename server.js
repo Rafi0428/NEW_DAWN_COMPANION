@@ -14,14 +14,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ------------------------------------------------------------
-// Core middleware
+// Core middleware & Static Routing
 // ------------------------------------------------------------
 app.use(express.json());
-app.use(express.static('public'));
 app.use(cookieParser());
 
-// Serve the static dashboard / quiz-results HTML from /public
+// 1. MUST COME FIRST: Intercept the root URL and serve landing.html
+// (If this comes after express.static, Express will auto-serve index.html instead)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'landing.html'));
+});
+
+// 2. Serve all other static assets (CSS, images, admin-dashboard.html, etc.) from /public
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 // ------------------------------------------------------------
 // Routes
