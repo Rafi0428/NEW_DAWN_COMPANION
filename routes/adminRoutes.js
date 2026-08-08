@@ -15,7 +15,6 @@ router.put(
     requireRole('admin'), 
     async (req, res) => {
         try {
-            // 1. Verify the user exists and is actually a teacher
             const userCheck = await db.query(
                 'SELECT id, role FROM users WHERE id = $1', 
                 [req.params.teacherId]
@@ -29,7 +28,6 @@ router.put(
                 return res.status(403).json({ error: 'Admins can only revoke approvals for teachers.' });
             }
 
-            // 2. Update the teacher's status to 'revoked'
             await db.query(
                 `UPDATE users SET status = 'revoked' WHERE id = $1`, 
                 [req.params.teacherId]
@@ -48,7 +46,23 @@ router.put(
 // LANDING PAGE CMS ROUTES
 // ============================================================
 
-// 1. ADD A NEW TEACHER TO LANDING PAGE
+// 1. GET ALL LANDING TEACHERS (For Admin Dashboard List)
+router.get(
+    '/admin/landing/teachers',
+    authenticateToken,
+    requireRole('admin'),
+    async (req, res) => {
+        try {
+            const result = await db.query('SELECT * FROM landing_teachers ORDER BY display_order ASC, id ASC');
+            res.status(200).json(result.rows);
+        } catch (err) {
+            console.error('Fetch landing teachers error:', err);
+            res.status(500).json({ error: 'Failed to fetch teachers.' });
+        }
+    }
+);
+
+// 2. ADD A NEW TEACHER TO LANDING PAGE
 router.post(
     '/admin/landing/teachers', 
     authenticateToken, 
@@ -72,7 +86,38 @@ router.post(
     }
 );
 
-// 2. REMOVE A TEACHER FROM LANDING PAGE
+// 3. EDIT / UPDATE A TEACHER
+router.put(
+    '/admin/landing/teachers/:id',
+    authenticateToken,
+    requireRole('admin'),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { name, role, display_order, image_url } = req.body;
+
+            const query = `
+                UPDATE landing_teachers
+                SET name = $1, role = $2, display_order = $3, image_url = $4
+                WHERE id = $5
+                RETURNING *;
+            `;
+            const values = [name, role, display_order || 0, image_url || null, id];
+
+            const result = await db.query(query, values);
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'Teacher record not found.' });
+            }
+
+            res.status(200).json({ message: 'Teacher updated successfully!', teacher: result.rows[0] });
+        } catch (err) {
+            console.error('Update landing teacher error:', err);
+            res.status(500).json({ error: 'Failed to update teacher.' });
+        }
+    }
+);
+
+// 4. REMOVE A TEACHER FROM LANDING PAGE
 router.delete(
     '/admin/landing/teachers/:id', 
     authenticateToken, 
@@ -89,7 +134,7 @@ router.delete(
     }
 );
 
-// 3. ADD A NEW TOPPER
+// 5. ADD A NEW TOPPER
 router.post(
     '/admin/landing/toppers', 
     authenticateToken, 
@@ -113,7 +158,7 @@ router.post(
     }
 );
 
-// 4. REMOVE A TOPPER
+// 6. REMOVE A TOPPER
 router.delete(
     '/admin/landing/toppers/:id', 
     authenticateToken, 
@@ -130,7 +175,7 @@ router.delete(
     }
 );
 
-// 5. UPDATE CONTACT & LOCATION SETTINGS
+// 7. UPDATE CONTACT & LOCATION SETTINGS
 router.put(
     '/admin/landing/settings', 
     authenticateToken, 
@@ -160,6 +205,52 @@ router.put(
         } catch (err) {
             console.error('Update landing settings error:', err);
             res.status(500).json({ error: 'Failed to update landing page settings.' });
+        }
+    }
+);
+// 5a. GET ALL TOPPERS (For Admin Dashboard List)
+router.get(
+    '/admin/landing/toppers',
+    authenticateToken,
+    requireRole('admin'),
+    async (req, res) => {
+        try {
+            const result = await db.query('SELECT * FROM landing_toppers ORDER BY batch_year DESC, percentage DESC');
+            res.status(200).json(result.rows);
+        } catch (err) {
+            console.error('Fetch landing toppers error:', err);
+            res.status(500).json({ error: 'Failed to fetch toppers.' });
+        }
+    }
+);
+
+// 5b. EDIT / UPDATE A TOPPER
+router.put(
+    '/admin/landing/toppers/:id',
+    authenticateToken,
+    requireRole('admin'),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { name, percentage, batch_year, image_url } = req.body;
+
+            const query = `
+                UPDATE landing_toppers
+                SET name = $1, percentage = $2, batch_year = $3, image_url = $4
+                WHERE id = $5
+                RETURNING *;
+            `;
+            const values = [name, percentage, batch_year, image_url || null, id];
+
+            const result = await db.query(query, values);
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'Topper record not found.' });
+            }
+
+            res.status(200).json({ message: 'Topper updated successfully!', topper: result.rows[0] });
+        } catch (err) {
+            console.error('Update landing topper error:', err);
+            res.status(500).json({ error: 'Failed to update topper.' });
         }
     }
 );

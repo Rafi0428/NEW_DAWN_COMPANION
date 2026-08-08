@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <style>
   main { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
-  h1 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 6px; background: linear-gradient(135deg, var(--text-primary) 50%, var(--dawn-violet) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h1 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 6px; background: linear-gradient(135deg, var(--text-primary) 50%, var(--dawn-violet) 100%); -webkit-background-clip: text;background-clip: text; /* <-- Added this! */  -webkit-text-fill-color: transparent; }
   .subtitle { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 20px; }
 
   /* Generalized list row for both pending and approved teachers */
@@ -163,8 +163,70 @@
               <button type="submit" class="btn btn-primary" style="width: 100%;">Save Settings</button>
           </form>
       </div>
+  </div> <!-- FIX: Moved closing div here to close the flex container -->
 
+  <!-- ========================================== -->
+  <!-- MANAGED TEACHERS LIST & EDIT MODAL         -->
+  <!-- ========================================== -->
+  <h1 style="margin-top: 56px;">Manage Live Educators</h1>
+  <p class="subtitle">Edit or remove teachers currently displayed on the public landing page.</p>
+  <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+  <div id="landingTeachersList"></div>
+  <div id="emptyLandingTeachers" class="empty-state" style="display:none;">
+      <p>No teachers currently added to the landing page.</p>
   </div>
+
+  <!-- EDIT TEACHER MODAL (Hidden by default) -->
+  <div id="editTeacherModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:1000; align-items:center; justify-content:center;">
+      <div class="cms-card" style="max-width:480px; width:90%; position:relative;">
+          <h3>Edit Teacher</h3>
+          <form id="edit-teacher-form">
+              <input type="hidden" id="edit-teacher-id">
+              
+              <input type="text" id="edit-teacher-name" required class="cms-input" placeholder="Teacher Name">
+              <textarea id="edit-teacher-role" rows="4" required class="cms-input" style="resize:vertical;" placeholder="Role / Qualifications"></textarea>
+              <input type="text" id="edit-teacher-image" class="cms-input" placeholder="Image URL">
+              <input type="number" id="edit-teacher-order" class="cms-input" placeholder="Display Order">
+              
+              <div style="display:flex; gap:10px; margin-top:10px;">
+                  <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
+                  <button type="button" class="btn btn-ghost" onclick="closeEditModal()" style="flex:1;">Cancel</button>
+              </div>
+          </form>
+      </div>
+  </div>
+  <!-- ========================================== -->
+  <!-- MANAGED TOPPERS LIST & EDIT MODAL          -->
+  <!-- ========================================== -->
+  <h1 style="margin-top: 56px;">Manage Student Toppers</h1>
+  <p class="subtitle">Edit or remove student toppers currently displayed on the website.</p>
+  <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+  <div id="landingToppersList"></div>
+  <div id="emptyLandingToppers" class="empty-state" style="display:none;">
+      <p>No toppers currently added to the landing page.</p>
+  </div>
+
+  <!-- EDIT TOPPER MODAL -->
+  <div id="editTopperModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:1000; align-items:center; justify-content:center;">
+      <div class="cms-card" style="max-width:480px; width:90%; position:relative;">
+          <h3>Edit Topper</h3>
+          <form id="edit-topper-form">
+              <input type="hidden" id="edit-topper-id">
+              <input type="text" id="edit-topper-name" required class="cms-input" placeholder="Student Name">
+              <input type="number" step="0.01" id="edit-topper-percentage" required class="cms-input" placeholder="Percentage">
+              <input type="number" id="edit-topper-batch" required class="cms-input" placeholder="Batch Year">
+              <input type="text" id="edit-topper-image" class="cms-input" placeholder="Image URL">
+              
+              <div style="display:flex; gap:10px; margin-top:10px;">
+                  <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
+                  <button type="button" class="btn btn-ghost" onclick="closeEditTopperModal()" style="flex:1;">Cancel</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
 </main>
 
 <script src="api.js"></script>
@@ -367,6 +429,7 @@
           if (res.ok) {
               showBanner('actionBanner', 'Featured Teacher added successfully!', 'success');
               e.target.reset(); 
+              loadLandingTeachers(); // FIX: Refresh list automatically
           } else {
               showBanner('actionBanner', data.error || 'Failed to add teacher.');
           }
@@ -449,6 +512,215 @@
       }
   });
 
+  // --- MANAGED TEACHERS LIST LOGIC ---
+
+  async function loadLandingTeachers() {
+      try {
+          const res = await apiFetch('/admin/landing/teachers');
+          const teachers = await res.json();
+          if (res.ok) renderLandingTeachersList(teachers);
+      } catch (err) {
+          console.error('Error loading landing teachers:', err);
+      }
+  }
+
+  function renderLandingTeachersList(teachers) {
+      const container = document.getElementById('landingTeachersList');
+      const emptyState = document.getElementById('emptyLandingTeachers');
+      container.innerHTML = '';
+
+      if (teachers.length === 0) {
+          emptyState.style.display = 'block';
+          return;
+      }
+      emptyState.style.display = 'none';
+
+      teachers.forEach(teacher => {
+          const row = document.createElement('div');
+          row.className = 'list-row';
+          row.innerHTML = `
+              <div class="who">
+                  <div class="name">${escapeHtml(teacher.name)}</div>
+                  <div class="meta">Order: ${teacher.display_order}</div>
+              </div>
+              <div class="actions">
+                  <button class="btn btn-ghost edit-teacher-btn" 
+                      data-id="${teacher.id}" data-name="${escapeHtml(teacher.name)}" 
+                      data-role="${escapeHtml(teacher.role)}" data-image="${escapeHtml(teacher.image_url || '')}" 
+                      data-order="${teacher.display_order}">Edit</button>
+                  <button class="btn btn-ghost btn-danger delete-teacher-btn" data-id="${teacher.id}">Delete</button>
+              </div>
+          `;
+          container.appendChild(row);
+      });
+
+      // Attach events to dynamically created buttons
+      document.querySelectorAll('.edit-teacher-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+              document.getElementById('edit-teacher-id').value = btn.dataset.id;
+              document.getElementById('edit-teacher-name').value = btn.dataset.name;
+              document.getElementById('edit-teacher-role').value = btn.dataset.role;
+              document.getElementById('edit-teacher-image').value = btn.dataset.image;
+              document.getElementById('edit-teacher-order').value = btn.dataset.order;
+              document.getElementById('editTeacherModal').style.display = 'flex';
+          });
+      });
+
+      document.querySelectorAll('.delete-teacher-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+              if (confirm('Are you sure you want to remove this teacher from the landing page?')) {
+                  hideBanner('actionBanner');
+                  const res = await apiFetch(`/admin/landing/teachers/${btn.dataset.id}`, { method: 'DELETE' });
+                  if (res.ok) {
+                      showBanner('actionBanner', 'Teacher removed from website.', 'success');
+                      loadLandingTeachers(); // Refresh list
+                  }
+              }
+          });
+      });
+  }
+
+  function closeEditModal() {
+      document.getElementById('editTeacherModal').style.display = 'none';
+  }
+
+  document.getElementById('edit-teacher-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideBanner('actionBanner');
+      const teacherId = document.getElementById('edit-teacher-id').value;
+      
+      const payload = {
+          name: document.getElementById('edit-teacher-name').value,
+          role: document.getElementById('edit-teacher-role').value,
+          image_url: document.getElementById('edit-teacher-image').value,
+          display_order: parseInt(document.getElementById('edit-teacher-order').value) || 0
+      };
+
+      const res = await apiFetch(`/admin/landing/teachers/${teacherId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+      });
+
+      if (res.ok) {
+          showBanner('actionBanner', 'Teacher details updated!', 'success');
+          closeEditModal();
+          loadLandingTeachers();
+      } else {
+          showBanner('actionBanner', 'Failed to update teacher.');
+      }
+  });
+  // --- MANAGED TOPPERS LIST LOGIC ---
+
+  async function loadLandingToppers() {
+      try {
+          const res = await apiFetch('/admin/landing/toppers');
+          const toppers = await res.json();
+          if (res.ok) renderLandingToppersList(toppers);
+      } catch (err) { console.error('Error loading landing toppers:', err); }
+  }
+
+  function renderLandingToppersList(toppers) {
+      const container = document.getElementById('landingToppersList');
+      const emptyState = document.getElementById('emptyLandingToppers');
+      container.innerHTML = '';
+
+      if (toppers.length === 0) {
+          emptyState.style.display = 'block';
+          return;
+      }
+      emptyState.style.display = 'none';
+
+      toppers.forEach(topper => {
+          const row = document.createElement('div');
+          row.className = 'list-row';
+          row.innerHTML = `
+              <div class="who">
+                  <div class="name">${escapeHtml(topper.name)}</div>
+                  <div class="meta">Batch: ${topper.batch_year} | Score: ${topper.percentage}%</div>
+              </div>
+              <div class="actions">
+                  <button class="btn btn-ghost edit-topper-btn" 
+                      data-id="${topper.id}" data-name="${escapeHtml(topper.name)}" 
+                      data-percentage="${topper.percentage}" data-batch="${topper.batch_year}" 
+                      data-image="${escapeHtml(topper.image_url || '')}">Edit</button>
+                  <button class="btn btn-ghost btn-danger delete-topper-btn" data-id="${topper.id}">Delete</button>
+              </div>
+          `;
+          container.appendChild(row);
+      });
+
+      document.querySelectorAll('.edit-topper-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+              document.getElementById('edit-topper-id').value = btn.dataset.id;
+              document.getElementById('edit-topper-name').value = btn.dataset.name;
+              document.getElementById('edit-topper-percentage').value = btn.dataset.percentage;
+              document.getElementById('edit-topper-batch').value = btn.dataset.batch;
+              document.getElementById('edit-topper-image').value = btn.dataset.image;
+              document.getElementById('editTopperModal').style.display = 'flex';
+          });
+      });
+
+      document.querySelectorAll('.delete-topper-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+              if (confirm('Delete this topper from the website?')) {
+                  hideBanner('actionBanner');
+                  const res = await apiFetch(`/admin/landing/toppers/${btn.dataset.id}`, { method: 'DELETE' });
+                  if (res.ok) {
+                      showBanner('actionBanner', 'Topper removed.', 'success');
+                      loadLandingToppers();
+                  }
+              }
+          });
+      });
+  }
+
+  function closeEditTopperModal() {
+      document.getElementById('editTopperModal').style.display = 'none';
+  }
+
+  document.getElementById('edit-topper-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideBanner('actionBanner');
+      const topperId = document.getElementById('edit-topper-id').value;
+      
+      const payload = {
+          name: document.getElementById('edit-topper-name').value,
+          percentage: parseFloat(document.getElementById('edit-topper-percentage').value),
+          batch_year: parseInt(document.getElementById('edit-topper-batch').value),
+          image_url: document.getElementById('edit-topper-image').value
+      };
+
+      const res = await apiFetch(`/admin/landing/toppers/${topperId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+      });
+
+      if (res.ok) {
+          showBanner('actionBanner', 'Topper updated!', 'success');
+          closeEditTopperModal();
+          loadLandingToppers();
+      } else { showBanner('actionBanner', 'Failed to update topper.'); }
+  });
+
+  // Modify the main Add Topper form to refresh the list automatically when a new one is added
+  document.getElementById('add-topper-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = { 
+          name: document.getElementById('topper-name').value, 
+          percentage: parseFloat(document.getElementById('topper-percentage').value), 
+          batch_year: parseInt(document.getElementById('topper-batch').value), 
+          image_url: document.getElementById('topper-image').value 
+      };
+      const res = await apiFetch('/admin/landing/toppers', { method: 'POST', body: payload });
+      if (res.ok) { 
+          e.target.reset(); 
+          showBanner('actionBanner', 'Topper Added!', 'success'); 
+          loadLandingToppers(); // Refresh list automatically
+      }
+  });
+
   // --- UTILS & INIT ---
 
   function escapeHtml(str) {
@@ -461,6 +733,8 @@
   if (user) {
     loadPendingTeachers();
     loadApprovedTeachers();
+    loadLandingTeachers(); // FIX: Added initialization here
+    loadLandingToppers(); // <-- This is the missing trigger!
   }
 </script>
 

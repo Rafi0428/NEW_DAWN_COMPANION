@@ -434,8 +434,9 @@
         }
 
         .teachers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 30px;
             width: 100%;
             margin-top: 20px;
@@ -443,6 +444,9 @@
 
         /* The Card Layout (Modeled after reference image) */
         .teacher-card {
+            width: 300px; /* Locks the card to a specific size */
+            max-width: 100%;
+            flex: 0 0 auto; /* Prevents the card from stretching */
             position: relative;
             height: 400px; /* Tall portrait style */
             border-radius: 20px;
@@ -1340,101 +1344,18 @@
     </section>
     <!-- TOPPERS SECTION -->
     <section class="toppers-section" id="toppers">
-        
-        <!-- Subtle golden background glow -->
-        <div class="toppers-ambient-glow"></div>
-
-        <div class="toppers-container scroll-reveal">
+        <!-- This wrapper forces everything inside to center perfectly -->
+        <div class="teachers-container scroll-reveal">
             
             <!-- Section Header -->
-            <div class="features-header">
+            <div class="features-header" style="text-align: center; width: 100%; margin-bottom: 20px;">
                 <h2 class="section-title">OUR TOPPERS</h2>
                 <div class="accent-line center-line"></div>
             </div>
 
-            <!-- === 2026 BATCH === -->
-            <div class="topper-year-group">
-                <!-- Centered Year Pill -->
-                <div class="year-pill-wrapper">
-                    <h3 class="year-pill">2026</h3>
-                </div>
+            <!-- THIS IS THE BUCKET: The JavaScript will inject the 2023 badge and students here -->
+            <div id="dynamic-toppers" style="width: 100%;">
                 
-                <!-- 5-Column Grid for Students -->
-                <div class="toppers-pill-grid">
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Aisha Rahman</span>
-                        <span class="student-marks">98.5%</span>
-                    </div>
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Rohan Das</span>
-                        <span class="student-marks">97.2%</span>
-                    </div>
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Priya Sen</span>
-                        <span class="student-marks">96.8%</span>
-                    </div>
-
-                    <div class="student-pill">
-                        <span class="student-name">Vikram Singh</span>
-                        <span class="student-marks">95.4%</span>
-                    </div>
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Neha Ali</span>
-                        <span class="student-marks">94.9%</span>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- === 2025 BATCH === -->
-            <div class="topper-year-group">
-                <div class="year-pill-wrapper">
-                    <h3 class="year-pill">2025</h3>
-                </div>
-                
-                <div class="toppers-pill-grid">
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Karan Patel</span>
-                        <span class="student-marks">99.1%</span>
-                    </div>
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Sneha Roy</span>
-                        <span class="student-marks">96.5%</span>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- === 2024 BATCH === -->
-            <div class="topper-year-group">
-                <div class="year-pill-wrapper">
-                    <h3 class="year-pill">2024</h3>
-                </div>
-                
-                <div class="toppers-pill-grid">
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Amit Sharma</span>
-                        <span class="student-marks">97.8%</span>
-                    </div>
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Nisha Gupta</span>
-                        <span class="student-marks">96.1%</span>
-                    </div>
-                    
-                    <div class="student-pill">
-                        <span class="student-name">Rahul Verma</span>
-                        <span class="student-marks">95.0%</span>
-                    </div>
-
-                </div>
             </div>
 
         </div>
@@ -1723,37 +1644,67 @@
                 // ==========================================
                 const teachersContainer = document.getElementById('dynamic-teachers'); 
                 if (teachersContainer && data.teachers.length > 0) {
-                    teachersContainer.innerHTML = ''; // Clear hardcoded HTML
+                    teachersContainer.innerHTML = ''; 
                     
                     data.teachers.forEach(teacher => {
-                        const imageSrc = teacher.image_url || 'default-avatar.png'; // Fallback image
+                        const imageSrc = teacher.image_url || ''; 
+                        
                         teachersContainer.innerHTML += `
                             <div class="teacher-card">
-                                <img src="${imageSrc}" alt="${teacher.name}" class="teacher-avatar">
-                                <h3>${teacher.name}</h3>
-                                <p>${teacher.role}</p>
+                                <div class="card-accent">
+                                    <span class="card-accent-text">Educators</span>
+                                </div>
+                                <img src="${imageSrc}" alt="${teacher.name}" class="teacher-img">
+                                
+                                <div class="teacher-info-overlay">
+                                    <h3 class="teacher-name">${teacher.name}</h3>
+                                    <p class="teacher-qual">${teacher.role}</p>
+                                </div>
                             </div>
                         `;
                     });
                 }
 
                 // ==========================================
-                // 3. INJECT TOPPERS
+                // 3. INJECT TOPPERS (Grouped by Year)
                 // ==========================================
                 const toppersContainer = document.getElementById('dynamic-toppers');
                 if (toppersContainer && data.toppers.length > 0) {
-                    toppersContainer.innerHTML = ''; // Clear hardcoded HTML
+                    toppersContainer.innerHTML = ''; 
                     
-                    data.toppers.forEach(topper => {
-                        const imageSrc = topper.image_url || 'default-avatar.png';
-                        toppersContainer.innerHTML += `
-                            <div class="topper-card">
-                                <img src="${imageSrc}" alt="${topper.name}">
-                                <h4>${topper.name}</h4>
-                                <p class="marks">${topper.percentage}%</p>
-                                <p class="batch">Batch ${topper.batch_year}</p>
+                    // Group data by batch_year
+                    const toppersByYear = data.toppers.reduce((acc, topper) => {
+                        if (!acc[topper.batch_year]) acc[topper.batch_year] = [];
+                        acc[topper.batch_year].push(topper);
+                        return acc;
+                    }, {});
+
+                    // Sort the years descending (2026, 2025, 2024...)
+                    const sortedYears = Object.keys(toppersByYear).sort((a, b) => b - a);
+
+                    sortedYears.forEach(year => {
+                        // Create the Year Badge (e.g. "2026")
+                        let yearBlockHTML = `
+                            <div style="display:flex; justify-content:center; margin-top: 40px; margin-bottom: 20px;">
+                                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); padding: 8px 30px; border-radius: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                                    <h3 style="margin: 0; color: #fff; font-family: var(--font-display); font-size: 1.4rem;">${year}</h3>
+                                </div>
                             </div>
+                            <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;">
                         `;
+
+                        // Add the student capsules for this year
+                        toppersByYear[year].forEach(topper => {
+                            yearBlockHTML += `
+                                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 30px; padding: 12px 24px; width: 300px; transition: transform 0.3s ease;">
+                                    <span style="color: #eee; font-weight: 500; font-size: 0.95rem;">${topper.name}</span>
+                                    <span style="color: #f39c12; font-weight: bold; font-size: 1.05rem;">${topper.percentage}%</span>
+                                </div>
+                            `;
+                        });
+
+                        yearBlockHTML += `</div>`; // Close the flex container
+                        toppersContainer.innerHTML += yearBlockHTML;
                     });
                 }
 
