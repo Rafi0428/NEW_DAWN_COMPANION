@@ -48,6 +48,42 @@
     color: #060813; 
     box-shadow: 0 0 15px rgba(255, 117, 117, 0.3);
   }
+
+  /* CMS Form Inputs */
+  .cms-input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+  }
+  .cms-input:focus {
+    border-color: var(--dawn-violet);
+    outline: none;
+  }
+  .cms-card {
+    flex: 1;
+    min-width: 300px;
+    padding: 24px;
+    background: var(--ink-900);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .cms-card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-family: var(--font-display);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+  }
 </style>
 </head>
 <body>
@@ -82,6 +118,52 @@
   <div id="approvedList"></div>
   <div id="emptyApprovedState" class="empty-state" style="display:none;">
     <p>No active teacher accounts found on the platform.</p>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- NEW LANDING PAGE CMS SECTION               -->
+  <!-- ========================================== -->
+  <h1 style="margin-top: 56px;">Landing Page Manager</h1>
+  <p class="subtitle">Update the public-facing promotional website content directly.</p>
+  <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+  <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+      
+      <!-- 1. ADD TEACHER FORM -->
+      <div class="cms-card">
+          <h3>Add Featured Teacher</h3>
+          <form id="add-teacher-form">
+              <input type="text" id="teacher-name" placeholder="Teacher Name" required class="cms-input">
+              <input type="text" id="teacher-role" placeholder="Role (e.g. Head Educator)" required class="cms-input">
+              <input type="text" id="teacher-image" placeholder="Image URL (Optional)" class="cms-input">
+              <input type="number" id="teacher-order" placeholder="Display Order (e.g. 1)" class="cms-input">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Add to Website</button>
+          </form>
+      </div>
+
+      <!-- 2. ADD TOPPER FORM -->
+      <div class="cms-card">
+          <h3>Add Student Topper</h3>
+          <form id="add-topper-form">
+              <input type="text" id="topper-name" placeholder="Student Name" required class="cms-input">
+              <input type="number" step="0.01" id="topper-percentage" placeholder="Percentage (e.g. 95.50)" required class="cms-input">
+              <input type="number" id="topper-batch" placeholder="Batch Year (e.g. 2026)" required class="cms-input">
+              <input type="text" id="topper-image" placeholder="Image URL (Optional)" class="cms-input">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Add to Website</button>
+          </form>
+      </div>
+
+      <!-- 3. UPDATE SETTINGS FORM -->
+      <div class="cms-card">
+          <h3>Update Contact Settings</h3>
+          <form id="update-settings-form">
+              <input type="email" id="setting-owner-email" placeholder="System Admin Email" class="cms-input">
+              <input type="text" id="setting-whatsapp" placeholder="Educator WhatsApp (+91...)" class="cms-input">
+              <input type="url" id="setting-map" placeholder="Google Maps Embed URL" class="cms-input">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Save Settings</button>
+          </form>
+      </div>
+
   </div>
 </main>
 
@@ -257,6 +339,115 @@
       btn.disabled = false;
     }
   }
+
+  // --- NEW: LANDING PAGE CMS LOGIC ---
+
+  document.getElementById('add-teacher-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideBanner('actionBanner');
+      const submitBtn = e.target.querySelector('button');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Adding...';
+
+      const payload = {
+          name: document.getElementById('teacher-name').value,
+          role: document.getElementById('teacher-role').value,
+          image_url: document.getElementById('teacher-image').value,
+          display_order: parseInt(document.getElementById('teacher-order').value) || 0
+      };
+
+      try {
+          const res = await apiFetch('/admin/landing/teachers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload
+          });
+          
+          const data = await res.json();
+          if (res.ok) {
+              showBanner('actionBanner', 'Featured Teacher added successfully!', 'success');
+              e.target.reset(); 
+          } else {
+              showBanner('actionBanner', data.error || 'Failed to add teacher.');
+          }
+      } catch (err) {
+          showBanner('actionBanner', 'Could not reach the server.');
+      } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Add to Website';
+      }
+  });
+
+  document.getElementById('add-topper-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideBanner('actionBanner');
+      const submitBtn = e.target.querySelector('button');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Adding...';
+
+      const payload = {
+          name: document.getElementById('topper-name').value,
+          percentage: parseFloat(document.getElementById('topper-percentage').value),
+          batch_year: parseInt(document.getElementById('topper-batch').value),
+          image_url: document.getElementById('topper-image').value
+      };
+
+      try {
+          const res = await apiFetch('/admin/landing/toppers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload
+          });
+          
+          const data = await res.json();
+          if (res.ok) {
+              showBanner('actionBanner', 'Student Topper added successfully!', 'success');
+              e.target.reset(); 
+          } else {
+              showBanner('actionBanner', data.error || 'Failed to add topper.');
+          }
+      } catch (err) {
+          showBanner('actionBanner', 'Could not reach the server.');
+      } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Add to Website';
+      }
+  });
+
+  document.getElementById('update-settings-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideBanner('actionBanner');
+      const submitBtn = e.target.querySelector('button');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+
+      const payload = {
+          owner_email: document.getElementById('setting-owner-email').value,
+          educator_whatsapp: document.getElementById('setting-whatsapp').value,
+          map_embed_url: document.getElementById('setting-map').value
+      };
+
+      try {
+          const res = await apiFetch('/admin/landing/settings', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload
+          });
+          
+          const data = await res.json();
+          if (res.ok) {
+              showBanner('actionBanner', 'Contact settings updated successfully!', 'success');
+              e.target.reset();
+          } else {
+              showBanner('actionBanner', data.error || 'Failed to update settings.');
+          }
+      } catch (err) {
+          showBanner('actionBanner', 'Could not reach the server.');
+      } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save Settings';
+      }
+  });
 
   // --- UTILS & INIT ---
 

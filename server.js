@@ -46,6 +46,8 @@ const authRoutes = require('./routes/authRoutes');           // login, signup, a
 const hierarchyRoutes = require('./routes/hierarchyRoutes'); // Class / Subject CRUD
 const chapterRoutes = require('./routes/chapterRoutes');     // Chapter CRUD + study material
 const quizRoutes = require('./routes/quizRoutes');           // AI quiz generation, attempts, results
+const adminRoutes = require('./routes/adminRoutes'); 
+const publicRoutes = require('./routes/publicRoutes'); // <-- ADD THIS
 
 // Auth routes are intentionally NOT wrapped in authenticateToken —
 // login/signup have to be reachable by unauthenticated users.
@@ -53,6 +55,8 @@ const quizRoutes = require('./routes/quizRoutes');           // AI quiz generati
 // authenticateToken + requireRole('admin'|'teacher') per-route.)
 app.use('/api/auth', authRoutes);
 
+app.use('/api', adminRoutes); 
+app.use('/api', publicRoutes); // <-- ADD THIS (It will mount at /api/public/landing-data)
 // These are all internally protected per-route — see the note above.
 app.use('/api', hierarchyRoutes);
 app.use('/api', chapterRoutes);

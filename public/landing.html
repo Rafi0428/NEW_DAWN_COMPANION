@@ -1209,10 +1209,10 @@
             <!-- Bottom Content: Caption and Buttons -->
             <div class="bottom-content">
                 <h2 class="caption-text">Learn from a topper, become a topper</h2>
-                <div class="cta-wrapper">
-                    <!-- Connect these hrefs to your actual routes -->
-                    <a href="/login" style="text-decoration: none;"><button class="glass-btn btn-login">Login</button></a>
-                    <a href="/dashboard" style="text-decoration: none;"><button class="glass-btn btn-start">Start</button></a>
+                <div class="cta-wrapper" style="display: flex; justify-content: center;">
+                    <a href="index.html" style="text-decoration: none;">
+                        <button class="glass-btn btn-login">Login</button>
+                    </a>
                 </div>
             </div>
 
@@ -1323,7 +1323,6 @@
 
     <!-- TEACHERS SECTION -->
     <section class="teachers-section" id="teachers">
-        
         <div class="teachers-container scroll-reveal">
             
             <!-- Section Header -->
@@ -1332,59 +1331,12 @@
                 <div class="accent-line center-line"></div>
             </div>
 
-            <!-- The Grid matching the reference image layout -->
-            <div class="teachers-grid">
-                
-                <!-- Educator 1: Shama Parween -->
-                <div class="teacher-card">
-                    <!-- The left accent shape -->
-                    <div class="card-accent">
-                        <span class="card-accent-text">Educators</span>
-                    </div>
-                    <!-- Add the teacher's transparent PNG image here later -->
-                    <img src="" alt="" class="teacher-img">
-                    
-                    <!-- Text Overlay -->
-                    <div class="teacher-info-overlay">
-                        <h3 class="teacher-name">Shama Parween</h3>
-                        <p class="teacher-qual">B.Sc. & M.Sc. in Geography<br>M.A. in Political Science<br>B.Ed., D.El.Ed.<br>CTET & WBTET Qualified</p>
-                    </div>
-                </div>
-
-                <!-- Educator 2: Fayek Qamar -->
-                <div class="teacher-card">
-                    <div class="card-accent">
-                        <span class="card-accent-text">Educators</span>
-                    </div>
-                    <img src="" alt="" class="teacher-img">
-                    <div class="teacher-info-overlay">
-                        <h3 class="teacher-name">Fayek Qamar</h3>
-                        <p class="teacher-qual">B.A. in Political Science<br>M.A. in History<br>M.A. in Political Science</p>
-                    </div>
-                </div>
-
-                <!-- Educator 3: Sania Parween -->
-                <div class="teacher-card">
-                    <div class="card-accent">
-                        <span class="card-accent-text">Educators</span>
-                    </div>
-                    <img src="" alt="" class="teacher-img">
-                    <div class="teacher-info-overlay">
-                        <h3 class="teacher-name">Sania Parween</h3>
-                        <p class="teacher-qual">B.A. LL.B.</p>
-                    </div>
-                </div>
-
-                <!-- ADMIN ONLY: Add Educator Card -->
-                <div class="teacher-card add-teacher-card">
-                    <div class="add-icon">+</div>
-                    <h3 class="teacher-name">Add Educator</h3>
-                    <p class="teacher-qual" style="color: #FFB347;">Admin Dashboard Only</p>
-                </div>
-
+            <!-- The Grid matching the reference image layout (LEFT EMPTY FOR JS) -->
+            <div class="teachers-grid" id="dynamic-teachers">
+                <!-- Dynamic teacher cards will be generated here -->
             </div>
-        </div>
 
+        </div>
     </section>
     <!-- TOPPERS SECTION -->
     <section class="toppers-section" id="toppers">
@@ -1752,6 +1704,77 @@
         // Find anything with the 'scroll-reveal' class and watch it
         document.querySelectorAll('.scroll-reveal').forEach(element => {
             scrollObserver.observe(element);
+        });
+    </script>
+    <!-- ========================================== -->
+    <!-- DYNAMIC DATA FETCHING SCRIPT               -->
+    <!-- ========================================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 1. Fetch all data from the public endpoint
+                const response = await fetch('/api/public/landing-data');
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error);
+
+                // ==========================================
+                // 2. INJECT TEACHERS
+                // ==========================================
+                const teachersContainer = document.getElementById('dynamic-teachers'); 
+                if (teachersContainer && data.teachers.length > 0) {
+                    teachersContainer.innerHTML = ''; // Clear hardcoded HTML
+                    
+                    data.teachers.forEach(teacher => {
+                        const imageSrc = teacher.image_url || 'default-avatar.png'; // Fallback image
+                        teachersContainer.innerHTML += `
+                            <div class="teacher-card">
+                                <img src="${imageSrc}" alt="${teacher.name}" class="teacher-avatar">
+                                <h3>${teacher.name}</h3>
+                                <p>${teacher.role}</p>
+                            </div>
+                        `;
+                    });
+                }
+
+                // ==========================================
+                // 3. INJECT TOPPERS
+                // ==========================================
+                const toppersContainer = document.getElementById('dynamic-toppers');
+                if (toppersContainer && data.toppers.length > 0) {
+                    toppersContainer.innerHTML = ''; // Clear hardcoded HTML
+                    
+                    data.toppers.forEach(topper => {
+                        const imageSrc = topper.image_url || 'default-avatar.png';
+                        toppersContainer.innerHTML += `
+                            <div class="topper-card">
+                                <img src="${imageSrc}" alt="${topper.name}">
+                                <h4>${topper.name}</h4>
+                                <p class="marks">${topper.percentage}%</p>
+                                <p class="batch">Batch ${topper.batch_year}</p>
+                            </div>
+                        `;
+                    });
+                }
+
+                // ==========================================
+                // 4. INJECT SETTINGS (Map & Contact Info)
+                // ==========================================
+                if (data.settings) {
+                    // Update the Map iframe
+                    const mapIframe = document.querySelector('.map-container iframe');
+                    if (mapIframe && data.settings.map_embed_url) {
+                        mapIframe.src = data.settings.map_embed_url;
+                    }
+
+                    // You can also target your email/WhatsApp links here by giving them IDs:
+                    // document.getElementById('contact-email').href = 'mailto:' + data.settings.owner_email;
+                    // document.getElementById('contact-whatsapp').href = 'https://wa.me/' + data.settings.educator_whatsapp;
+                }
+
+            } catch (error) {
+                console.error('Failed to load dynamic landing page data:', error);
+            }
         });
     </script>
 </body>

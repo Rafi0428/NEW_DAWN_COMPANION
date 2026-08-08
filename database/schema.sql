@@ -151,3 +151,47 @@ FOR EACH ROW EXECUTE FUNCTION enforce_enrollment_student_role();
 -- ------------------------------------------------------------
 -- INSERT INTO users (full_name, email, password_hash, role, status)
 -- VALUES ('Root Admin', 'admin@newdawn.local', '<bcrypt-hash-here>', 'admin', 'approved');
+
+
+-- ============================================================
+-- LANDING PAGE CMS TABLES
+-- ============================================================
+
+-- 1. Teachers / Faculty Directory
+CREATE TABLE IF NOT EXISTS landing_teachers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(255) NOT NULL,          -- e.g., "Head Educator" or "Mathematics Faculty"
+    image_url TEXT,                      -- Link to their uploaded profile picture
+    display_order INTEGER DEFAULT 0,     -- Allows admin to easily sort who appears first
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Toppers / Student Success Showcase
+CREATE TABLE IF NOT EXISTS landing_toppers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    percentage DECIMAL(5,2) NOT NULL,    -- Allows precise marks like 98.50
+    batch_year INTEGER NOT NULL,         -- e.g., 2026, 2025 (used to group them in the UI)
+    image_url TEXT,                      
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Contact & Platform Settings
+-- This table is designed to hold only ONE row that the admin updates over time
+CREATE TABLE IF NOT EXISTS landing_settings (
+    id SERIAL PRIMARY KEY,
+    owner_email VARCHAR(255),            
+    owner_github VARCHAR(255),
+    owner_linkedin VARCHAR(255),
+    educator_whatsapp VARCHAR(50),       -- Includes country code, e.g., +917998403188
+    educator_email VARCHAR(255),
+    location_url TEXT,                   -- The clickable Google Maps link
+    map_embed_url TEXT,                  -- The secure iframe source link we generated
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert a default row into settings so the admin always has something to edit
+INSERT INTO landing_settings (id, owner_email, educator_whatsapp, updated_at) 
+VALUES (1, 'mdrafiahmed0137@gmail.com', '+917998403188', CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
