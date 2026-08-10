@@ -184,13 +184,25 @@
       </div>
 
       <!-- 3. UPDATE SETTINGS FORM -->
+      <!-- 3. UPDATE SETTINGS FORM -->
       <div class="cms-card">
           <h3>Update Contact Settings</h3>
           <form id="update-settings-form">
-              <input type="email" id="setting-owner-email" placeholder="System Admin Email" class="cms-input">
-              <input type="text" id="setting-whatsapp" placeholder="Educator WhatsApp (+91...)" class="cms-input">
-              <input type="url" id="setting-map" placeholder="Google Maps Embed URL" class="cms-input">
-              <button type="submit" class="btn btn-primary" style="width: 100%;">Save Settings</button>
+              <p style="color:var(--dawn-violet); font-size:0.85rem; margin-top:0; font-family:var(--font-mono);">FOUNDER DETAILS</p>
+              <input type="text" id="setting-owner-name" placeholder="Founder Name" class="cms-input">
+              <input type="email" id="setting-owner-email" placeholder="Founder Email" class="cms-input">
+              <input type="text" id="setting-github" placeholder="GitHub URL (e.g. github.com/Rafi0428)" class="cms-input">
+              <input type="text" id="setting-linkedin" placeholder="LinkedIn URL" class="cms-input">
+
+              <p style="color:var(--dawn-violet); font-size:0.85rem; margin-top:10px; font-family:var(--font-mono);">EDUCATOR DETAILS</p>
+              <input type="text" id="setting-edu-name" placeholder="Educator Name" class="cms-input">
+              <input type="email" id="setting-edu-email" placeholder="Educator Email" class="cms-input">
+              <input type="text" id="setting-whatsapp" placeholder="WhatsApp Number (+91...)" class="cms-input">
+
+              <p style="color:var(--dawn-violet); font-size:0.85rem; margin-top:10px; font-family:var(--font-mono);">LOCATION MAP</p>
+              <input type="url" id="setting-map" placeholder="Google Maps Embed URL (src link)" class="cms-input">
+              
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Settings</button>
           </form>
       </div>
 
@@ -572,38 +584,27 @@
       }
   });
 
+  // CMS: SETTINGS
   document.getElementById('update-settings-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      hideBanner('actionBanner');
-      const submitBtn = e.target.querySelector('button');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Saving...';
-
-      const payload = {
+      const p = {
+          owner_name: document.getElementById('setting-owner-name').value,
           owner_email: document.getElementById('setting-owner-email').value,
+          owner_github: document.getElementById('setting-github').value,
+          owner_linkedin: document.getElementById('setting-linkedin').value,
+          educator_name: document.getElementById('setting-edu-name').value,
+          educator_email: document.getElementById('setting-edu-email').value,
           educator_whatsapp: document.getElementById('setting-whatsapp').value,
           map_embed_url: document.getElementById('setting-map').value
       };
-
-      try {
-          const res = await apiFetch('/admin/landing/settings', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: payload
-          });
-          
-          const data = await res.json();
-          if (res.ok) {
-              showBanner('actionBanner', 'Contact settings updated successfully!', 'success');
-              e.target.reset();
-          } else {
-              showBanner('actionBanner', data.error || 'Failed to update settings.');
-          }
-      } catch (err) {
-          showBanner('actionBanner', 'Could not reach the server.');
-      } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Settings';
+      
+      // FIX: Removed JSON.stringify(p) and manual headers!
+      const res = await apiFetch('/admin/landing/settings', { method: 'PUT', body: p });
+      
+      if (res.ok) {
+          showBanner('actionBanner', 'Settings updated!', 'success');
+      } else {
+          showBanner('actionBanner', 'Failed to update settings.');
       }
   });
 

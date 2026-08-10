@@ -1403,69 +1403,17 @@
     <!-- START: NEW STRICT CONTACT SECTION          -->
     <!-- ========================================== -->
     <section class="contact-section" id="contact">
-        <div class="contact-container">
-            
-            <!-- Section Header -->
-            <div class="features-header">
-                <h2 class="section-title">CONTACT US</h2>
-                <div class="accent-line center-line"></div>
-            </div>
+        <div class="features-header" style="text-align: center; margin-bottom: 40px; margin-top: 60px;">
+            <h2 class="section-title">CONTACT US</h2>
+            <div class="accent-line center-line"></div>
+        </div>
+        
+        <!-- THIS IS THE BUCKET FOR THE CONTACT CARD AND MAP -->
+        <div id="dynamic-contact" style="width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 20px;">
+            <!-- JavaScript will inject the dual-card and map here -->
+        </div>
+    </section>
 
-            <!-- The Rigid Grid Card -->
-            <div class="contact-card">
-                
-                <!-- Left Side: Owner Profile -->
-                <div class="contact-half">
-                    <div class="profile-header">
-                        <img src="owner picture.png" alt="MD RAFI AHMED" class="profile-avatar">
-                        <div class="profile-info">
-                            <h3>MD RAFI AHMED</h3>
-                            <p>FOUNDER & DEVELOPER</p>
-                        </div>
-                    </div>
-                    
-                    <div class="profile-links">
-                        <div class="link-row">
-                            <span class="link-label">email :</span>
-                            <a href="mailto:mdrafiahmed0137@gmail.com">mdrafiahmed0137@gmail.com</a>
-                        </div>
-                        <div class="link-row">
-                            <span class="link-label">Github :</span>
-                            <a href="https://github.com/Rafi0428" target="_blank">github.com/Rafi0428</a>
-                        </div>
-                        <div class="link-row">
-                            <span class="link-label">Linkedin :</span>
-                            <a href="https://www.linkedin.com/in/md-rafi-ahmed-2b2b303a9/" target="_blank">linkedin.com/in/md-rafi-ahmed-2b2b303a9</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Absolute Center Divider -->
-                <div class="card-divider"></div>
-
-                <!-- Right Side: Head Educator Profile -->
-                <div class="contact-half">
-                    <div class="profile-header">
-                        <img src="" alt="Shama Parween" class="profile-avatar">
-                        <div class="profile-info">
-                            <h3>Shama Parween</h3>
-                            <p>HEAD EDUCATOR</p>
-                        </div>
-                    </div>
-                    
-                    <div class="profile-links">
-                        <div class="link-row">
-                            <span class="link-label">contact 💬 :</span>
-                            <a href="https://wa.me/917998403188" target="_blank">+91 7998403188</a>
-                        </div>
-                        <div class="link-row">
-                            <span class="link-label">email :</span>
-                            <a href="mailto:shamaparween0008@gmail.com">shamaparween0008@gmail.com</a>
-                        </div>
-                    </div>
-                </div>
-            </div> <!-- THIS IS THE CRITICAL MISSING TAG THAT CLOSES THE CARD! -->
-            
             <!-- ========================================== -->
             <!-- LIVE INTERACTIVE GOOGLE MAP                -->
             <!-- ========================================== -->
@@ -1718,18 +1666,74 @@
                 };
 
                 // ==========================================
-                // 4. INJECT SETTINGS (Map & Contact Info)
+                // 6. HANDLE PAYMENT BUTTON CLICKS
                 // ==========================================
-                if (data.settings) {
-                    // Update the Map iframe
-                    const mapIframe = document.querySelector('.map-container iframe');
-                    if (mapIframe && data.settings.map_embed_url) {
-                        mapIframe.src = data.settings.map_embed_url;
-                    }
+                window.openPayment = function(planName, planPrice) {
+                    // (Authentication check has been removed for testing)
+                    console.log(`Initiating checkout for ${planName} at ₹${planPrice}`);
+                    alert(`Preparing secure payment for the ${planName} plan (₹${planPrice})...\n\nRazorpay popup will open here!`);
+                };
 
-                    // You can also target your email/WhatsApp links here by giving them IDs:
-                    // document.getElementById('contact-email').href = 'mailto:' + data.settings.owner_email;
-                    // document.getElementById('contact-whatsapp').href = 'https://wa.me/' + data.settings.educator_whatsapp;
+                // ==========================================
+                // 7. INJECT CONTACT SETTINGS
+                // ==========================================
+                const contactContainer = document.getElementById('dynamic-contact');
+                if (contactContainer && data.settings) {
+                    const s = data.settings;
+                    
+                    // Fallbacks map directly to the database or default to original names
+                    const ownerName = s.owner_name || 'Md Rafi Ahmed';
+                    const ownerEmail = s.owner_email || 'mdrafiahmed0137@gmail.com';
+                    const ownerGit = s.owner_github || 'github.com/Rafi0428';
+                    const ownerLinked = s.owner_linkedin || 'https://www.linkedin.com/in/md-rafi-ahmed-2b2b303a9/';
+                    
+                    const eduName = s.educator_name || 'Shama Parween';
+                    const eduEmail = s.educator_email || 'shamaparween0008@gmail.com';
+                    const eduPhone = s.educator_whatsapp || '+91 7998403188';
+                    
+                    const waLink = `https://wa.me/${eduPhone.replace(/\D/g, '')}`;
+
+                    contactContainer.innerHTML = `
+                        <div style="display:flex; flex-wrap:wrap; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:20px; overflow:hidden; margin-bottom: 30px;">
+                            
+                            <div style="flex:1; min-width:300px; padding:40px; border-right:1px solid rgba(255,255,255,0.05);">
+                                <div style="display:flex; align-items:center; gap:20px; margin-bottom:30px;">
+                                    <img src="owner_picture.png" alt="${ownerName}" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
+                                    <div>
+                                        <h3 style="margin:0; color:#fff; font-family:var(--font-display); font-size:1.3rem; text-transform:uppercase;">${ownerName}</h3>
+                                        <p style="margin:5px 0 0; color:#f39c12; font-size:0.85rem; font-weight:600; letter-spacing:1px;">FOUNDER & DEVELOPER</p>
+                                    </div>
+                                </div>
+                                <div style="color:#a0a3b5; font-size:0.95rem; line-height:2.2;">
+                                    <div style="display:flex; gap:15px;"><strong style="color:#e2e4f0; width:80px;">email :</strong> <a href="mailto:${ownerEmail}" style="color:inherit; text-decoration:none;">${ownerEmail}</a></div>
+                                    <div style="display:flex; gap:15px;"><strong style="color:#e2e4f0; width:80px;">Github :</strong> <a href="${ownerGit.startsWith('http') ? ownerGit : 'https://' + ownerGit}" target="_blank" style="color:inherit; text-decoration:none;">${ownerGit.replace('https://', '').replace('http://', '')}</a></div>
+                                    <div style="display:flex; gap:15px;"><strong style="color:#e2e4f0; width:80px;">Linkedin :</strong> <a href="${ownerLinked.startsWith('http') ? ownerLinked : 'https://' + ownerLinked}" target="_blank" style="color:inherit; text-decoration:none; word-break: break-all;">${ownerLinked.replace('https://', '').replace('http://', '')}</a></div>
+                                </div>
+                            </div>
+                            
+                            <div style="flex:1; min-width:300px; padding:40px;">
+                                <div style="display:flex; align-items:center; gap:20px; margin-bottom:30px;">
+                                    <div style="width:80px; height:80px; border-radius:50%; border:1px dashed rgba(255,255,255,0.2);"></div>
+                                    <div>
+                                        <h3 style="margin:0; color:#fff; font-family:var(--font-display); font-size:1.3rem;">${eduName}</h3>
+                                        <p style="margin:5px 0 0; color:#f39c12; font-size:0.85rem; font-weight:600; letter-spacing:1px;">HEAD EDUCATOR</p>
+                                    </div>
+                                </div>
+                                <div style="color:#a0a3b5; font-size:0.95rem; line-height:2.2;">
+                                    <div style="display:flex; gap:15px;"><strong style="color:#e2e4f0; width:80px;">contact 💬:</strong> <a href="${waLink}" target="_blank" style="color:inherit; text-decoration:none;">${eduPhone}</a></div>
+                                    <div style="display:flex; gap:15px;"><strong style="color:#e2e4f0; width:80px;">email :</strong> <a href="mailto:${eduEmail}" style="color:inherit; text-decoration:none;">${eduEmail}</a></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    if (s.map_embed_url) {
+                        contactContainer.innerHTML += `
+                            <div style="width:100%; border-radius:20px; overflow:hidden; border:1px solid rgba(255,255,255,0.05); height: 350px;">
+                                <iframe src="${s.map_embed_url}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                            </div>
+                        `;
+                    }
                 }
 
             } catch (error) {
