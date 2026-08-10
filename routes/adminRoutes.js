@@ -305,4 +305,42 @@ router.delete('/admin/landing/faqs/:id', authenticateToken, requireRole('admin')
         res.status(500).json({ error: 'Failed to delete FAQ.' });
     }
 });
+// ============================================================
+// PRICING CMS ROUTES
+// ============================================================
+router.get('/admin/landing/pricing', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM landing_pricing ORDER BY display_order ASC, id ASC');
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: 'Failed to fetch pricing.' }); }
+});
+
+router.post('/admin/landing/pricing', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        const { plan_name, price, duration, features, is_highlighted, display_order } = req.body;
+        const result = await db.query(
+            'INSERT INTO landing_pricing (plan_name, price, duration, features, is_highlighted, display_order) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [plan_name, price, duration, features, is_highlighted || false, display_order || 0]
+        );
+        res.status(201).json({ message: "Plan added!", plan: result.rows[0] });
+    } catch (err) { res.status(500).json({ error: 'Failed to add plan.' }); }
+});
+
+router.put('/admin/landing/pricing/:id', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        const { plan_name, price, duration, features, is_highlighted, display_order } = req.body;
+        const result = await db.query(
+            'UPDATE landing_pricing SET plan_name = $1, price = $2, duration = $3, features = $4, is_highlighted = $5, display_order = $6 WHERE id = $7 RETURNING *',
+            [plan_name, price, duration, features, is_highlighted || false, display_order || 0, req.params.id]
+        );
+        res.json({ message: 'Plan updated!', plan: result.rows[0] });
+    } catch (err) { res.status(500).json({ error: 'Failed to update plan.' }); }
+});
+
+router.delete('/admin/landing/pricing/:id', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        await db.query('DELETE FROM landing_pricing WHERE id = $1', [req.params.id]);
+        res.json({ message: 'Plan deleted.' });
+    } catch (err) { res.status(500).json({ error: 'Failed to delete plan.' }); }
+});
 module.exports = router;

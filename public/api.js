@@ -105,7 +105,7 @@ function requireAuth(allowedRoles) {
 function dashboardPathFor(role) {
     if (role === 'admin') return 'admin-dashboard.html';
     if (role === 'teacher') return 'teacher-dashboard.html';
-    return 'student-home.html';
+    return 'student-dashboard.html';
 }
 
 // Small helper for showing inline error/success banners consistently.

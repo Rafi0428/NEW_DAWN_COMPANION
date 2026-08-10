@@ -1377,69 +1377,27 @@
         </div>
     </section>
     <!-- SUBSCRIPTION SECTION (Not in Navbar) -->
-    <section class="subscription-section" id="subscription">
-        
-        <!-- Subtle golden background glow -->
+    <!-- SUBSCRIPTION SECTION -->
+    <section class="subscription-section" id="pricing">
         <div class="subs-ambient-glow"></div>
-
+        
         <div class="subs-container scroll-reveal">
-            
-            <!-- Section Header -->
-            <div class="features-header">
+            <div class="features-header" style="text-align: center; margin-bottom: 40px;">
                 <h2 class="section-title">CHOOSE YOUR PATH</h2>
                 <div class="accent-line center-line"></div>
             </div>
 
-            <!-- The Pricing Grid -->
-            <div class="subs-grid">
-                
-                <!-- 1. Monthly Subscription -->
-                <div class="pricing-card">
-                    <h3 class="plan-title">Monthly</h3>
-                    <div class="plan-price">₹299<span class="price-duration">/mo</span></div>
-                    <ul class="plan-features">
-                        <li>Access to Chapter-wise PDF Notes</li>
-                        <li>Daily Practice Quizzes</li>
-                        <li>Standard Performance Tracking</li>
-                    </ul>
-                    <button class="subs-btn">Select Plan</button>
-                </div>
-
-                <!-- 2. Quarterly Subscription -->
-                <div class="pricing-card">
-                    <h3 class="plan-title">Quarterly</h3>
-                    <div class="plan-price">₹799<span class="price-duration">/3 mos</span></div>
-                    <ul class="plan-features">
-                        <li>Everything in Monthly</li>
-                        <li>Full Semester Mock Tests</li>
-                        <li>Detailed Analytics Dashboard</li>
-                    </ul>
-                    <button class="subs-btn">Select Plan</button>
-                </div>
-
-                <!-- 3. Full Course Subscription (Highlighted) -->
-                <div class="pricing-card premium-card">
-                    <div class="premium-badge">BEST VALUE</div>
-                    <h3 class="plan-title">Full Course</h3>
-                    <div class="plan-price">₹2,499<span class="price-duration">/full</span></div>
-                    <ul class="plan-features">
-                        <li>Everything in Quarterly</li>
-                        <li>All Previous Year & Model Papers</li>
-                        <li>Priority Server Access & Support</li>
-                        <li>Complete WBCHSE Syllabus</li>
-                    </ul>
-                    <button class="subs-btn premium-btn">Select Plan</button>
-                </div>
-
+            <!-- THIS IS THE BUCKET FOR DYNAMIC CARDS -->
+            <div class="subs-grid" id="dynamic-pricing">
+                <!-- JS will inject the .pricing-card elements here -->
             </div>
 
-            <!-- Payment Methods Banner (Admin Editable) -->
+            <!-- STATIC FOOTER -->
             <div class="payment-methods-banner">
-                <span class="payment-icon">🔒</span>
-                <p>Secure checkout powered by <strong>Razorpay</strong>. <br>
-                <span class="payment-types">Accepting UPI, RuPay, Visa, MasterCard, and NetBanking.</span></p>
+                <p>Secure payments via UPI, NetBanking, and all major Credit/Debit Cards.</p>
+                <p class="payment-types">Powered by Razorpay</p>
             </div>
-        
+        </div>
     </section>
     <!-- ========================================== -->
     <!-- START: NEW STRICT CONTACT SECTION          -->
@@ -1700,6 +1658,64 @@
                         });
                     });
                 }
+
+                // ==========================================
+                // 5. INJECT PRICING PLANS (Preserving Custom UI)
+                // ==========================================
+                const pricingContainer = document.getElementById('dynamic-pricing');
+                if (pricingContainer && data.pricing && data.pricing.length > 0) {
+                    pricingContainer.innerHTML = ''; 
+                    
+                    data.pricing.forEach(plan => {
+                        // Split features by line breaks. We DO NOT add checkmarks here 
+                        // because your CSS (.plan-features li::before) adds them automatically!
+                        const featuresListHtml = plan.features.split('\n')
+                            .filter(f => f.trim() !== '')
+                            .map(f => `<li>${f.trim()}</li>`)
+                            .join('');
+
+                        // Determine classes based on whether it is the "Best Value" plan
+                        const cardClass = plan.is_highlighted ? 'pricing-card premium-card' : 'pricing-card';
+                        const badgeHtml = plan.is_highlighted ? '<div class="premium-badge">BEST VALUE</div>' : '';
+                        const btnClass = plan.is_highlighted ? 'subs-btn premium-btn' : 'subs-btn';
+
+                        // Inject the exact HTML structure to match your CSS perfectly
+                        pricingContainer.innerHTML += `
+                            <div class="${cardClass}">
+                                ${badgeHtml}
+                                <div class="plan-title">${plan.plan_name}</div>
+                                <div class="plan-price">
+                                    ₹${plan.price}<span class="price-duration">${plan.duration || ''}</span>
+                                </div>
+                                <ul class="plan-features">
+                                    ${featuresListHtml}
+                                </ul>
+                                <!-- THE BUTTON IS NOW ACTIVATED -->
+                                <button class="${btnClass}" onclick="openPayment('${plan.plan_name}', '${plan.price}')">Select Plan</button>
+                            </div>
+                        `;
+                    });
+                }
+
+                // ==========================================
+                // 6. HANDLE PAYMENT BUTTON CLICKS
+                // ==========================================
+                window.openPayment = function(planName, planPrice) {
+                    
+                    // (Authentication check has been removed for testing)
+
+                    console.log(`Initiating checkout for ${planName} at ₹${planPrice}`);
+                    
+                    // Temporary popup to confirm the button is catching the right dynamic data
+                    alert(`Preparing secure payment for the ${planName} plan (₹${planPrice})...\n\nRazorpay popup will open here!`);
+                    
+                    /* 
+                       TODO: RAZORPAY INTEGRATION GOES HERE
+                       1. Call your backend (e.g., /api/create-order) with the planPrice
+                       2. Get the order_id back from your server
+                       3. Open the Razorpay checkout modal
+                    */
+                };
 
                 // ==========================================
                 // 4. INJECT SETTINGS (Map & Contact Info)

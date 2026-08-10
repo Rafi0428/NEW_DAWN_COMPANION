@@ -164,6 +164,25 @@
           </form>
       </div>
 
+      <!-- ADD PRICING PLAN FORM -->
+      <div class="cms-card">
+          <h3>Add Pricing Plan</h3>
+          <form id="add-pricing-form">
+              <input type="text" id="plan-name" placeholder="Plan Name (e.g. Monthly)" required class="cms-input">
+              <div style="display: flex; gap: 10px;">
+                  <input type="number" id="plan-price" placeholder="Price (e.g. 299)" required class="cms-input" style="flex: 1;">
+                  <input type="text" id="plan-duration" placeholder="Duration (e.g. /mo)" class="cms-input" style="flex: 1;">
+              </div>
+              <textarea id="plan-features" rows="4" placeholder="Features (Press Enter for a new feature line)" required class="cms-input" style="resize:vertical;"></textarea>
+              <div style="display: flex; align-items: center; margin-bottom: 14px; gap: 10px;">
+                  <input type="checkbox" id="plan-highlight" style="width: 18px; height: 18px;">
+                  <label for="plan-highlight" style="color: var(--text-primary); font-size: 0.9rem;">Highlight as "Best Value"</label>
+              </div>
+              <input type="number" id="plan-order" placeholder="Display Order (1, 2, 3...)" class="cms-input">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Add Plan</button>
+          </form>
+      </div>
+
       <!-- 3. UPDATE SETTINGS FORM -->
       <div class="cms-card">
           <h3>Update Contact Settings</h3>
@@ -262,6 +281,42 @@
               <div style="display:flex; gap:10px; margin-top:10px;">
                   <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
                   <button type="button" class="btn btn-ghost" onclick="document.getElementById('editFaqModal').style.display='none'" style="flex:1;">Cancel</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MANAGED PRICING LIST & EDIT MODAL          -->
+  <!-- ========================================== -->
+  <h1 style="margin-top: 56px;">Manage Pricing Plans</h1>
+  <p class="subtitle">Edit or remove subscription tiers.</p>
+  <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+  <div id="landingPricingList"></div>
+  <div id="emptyLandingPricing" class="empty-state" style="display:none;"><p>No pricing plans added yet.</p></div>
+
+  <!-- EDIT PRICING MODAL -->
+  <div id="editPricingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:1000; align-items:center; justify-content:center;">
+      <div class="cms-card" style="max-width:480px; width:90%; position:relative;">
+          <h3>Edit Pricing Plan</h3>
+          <form id="edit-pricing-form">
+              <input type="hidden" id="edit-plan-id">
+              <input type="text" id="edit-plan-name" required class="cms-input" placeholder="Plan Name">
+              <div style="display: flex; gap: 10px;">
+                  <input type="number" id="edit-plan-price" required class="cms-input" placeholder="Price">
+                  <input type="text" id="edit-plan-duration" class="cms-input" placeholder="Duration">
+              </div>
+              <textarea id="edit-plan-features" rows="4" required class="cms-input" style="resize:vertical;" placeholder="Features"></textarea>
+              <div style="display: flex; align-items: center; margin-bottom: 14px; gap: 10px;">
+                  <input type="checkbox" id="edit-plan-highlight" style="width: 18px; height: 18px;">
+                  <label for="edit-plan-highlight" style="color: var(--text-primary); font-size: 0.9rem;">Highlight as "Best Value"</label>
+              </div>
+              <input type="number" id="edit-plan-order" class="cms-input" placeholder="Display Order">
+              
+              <div style="display:flex; gap:10px; margin-top:10px;">
+                  <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
+                  <button type="button" class="btn btn-ghost" onclick="document.getElementById('editPricingModal').style.display='none'" style="flex:1;">Cancel</button>
               </div>
           </form>
       </div>
@@ -828,6 +883,90 @@
       if (res.ok) { document.getElementById('editFaqModal').style.display = 'none'; showBanner('actionBanner', 'FAQ Updated!', 'success'); loadLandingFaqs(); }
   });
 
+  // --- PRICING LOGIC ---
+  async function loadLandingPricing() {
+      try {
+          const res = await apiFetch('/admin/landing/pricing');
+          const plans = await res.json();
+          if (res.ok) renderLandingPricingList(plans);
+      } catch (err) { console.error(err); }
+  }
+
+  function renderLandingPricingList(plans) {
+      const container = document.getElementById('landingPricingList');
+      const emptyState = document.getElementById('emptyLandingPricing');
+      container.innerHTML = '';
+      if (plans.length === 0) return emptyState.style.display = 'block';
+      emptyState.style.display = 'none';
+
+      plans.forEach(plan => {
+          const row = document.createElement('div');
+          row.className = 'list-row';
+          row.innerHTML = `
+              <div class="who">
+                  <div class="name">${escapeHtml(plan.plan_name)} <span style="color:#f39c12; font-size:0.8rem;">${plan.is_highlighted ? '★ BEST VALUE' : ''}</span></div>
+                  <div class="meta">₹${plan.price}${plan.duration} | Order: ${plan.display_order}</div>
+              </div>
+              <div class="actions">
+                  <button class="btn btn-ghost edit-pricing-btn" data-id="${plan.id}" data-name="${escapeHtml(plan.plan_name)}" data-price="${plan.price}" data-duration="${escapeHtml(plan.duration || '')}" data-features="${escapeHtml(plan.features)}" data-highlight="${plan.is_highlighted}" data-order="${plan.display_order}">Edit</button>
+                  <button class="btn btn-ghost btn-danger delete-pricing-btn" data-id="${plan.id}">Delete</button>
+              </div>
+          `;
+          container.appendChild(row);
+      });
+
+      document.querySelectorAll('.edit-pricing-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+              document.getElementById('edit-plan-id').value = btn.dataset.id;
+              document.getElementById('edit-plan-name').value = btn.dataset.name;
+              document.getElementById('edit-plan-price').value = btn.dataset.price;
+              document.getElementById('edit-plan-duration').value = btn.dataset.duration;
+              document.getElementById('edit-plan-features').value = btn.dataset.features;
+              document.getElementById('edit-plan-highlight').checked = btn.dataset.highlight === 'true';
+              document.getElementById('edit-plan-order').value = btn.dataset.order;
+              document.getElementById('editPricingModal').style.display = 'flex';
+          });
+      });
+
+      document.querySelectorAll('.delete-pricing-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+              if (confirm('Delete this plan?')) {
+                  await apiFetch(`/admin/landing/pricing/${btn.dataset.id}`, { method: 'DELETE' });
+                  loadLandingPricing();
+              }
+          });
+      });
+  }
+
+  document.getElementById('add-pricing-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = { 
+          plan_name: document.getElementById('plan-name').value, 
+          price: document.getElementById('plan-price').value, 
+          duration: document.getElementById('plan-duration').value,
+          features: document.getElementById('plan-features').value,
+          is_highlighted: document.getElementById('plan-highlight').checked,
+          display_order: parseInt(document.getElementById('plan-order').value) || 0 
+      };
+      const res = await apiFetch('/admin/landing/pricing', { method: 'POST', body: payload });
+      if (res.ok) { e.target.reset(); showBanner('actionBanner', 'Plan Added!', 'success'); loadLandingPricing(); }
+  });
+
+  document.getElementById('edit-pricing-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-plan-id').value;
+      const payload = { 
+          plan_name: document.getElementById('edit-plan-name').value, 
+          price: document.getElementById('edit-plan-price').value, 
+          duration: document.getElementById('edit-plan-duration').value,
+          features: document.getElementById('edit-plan-features').value,
+          is_highlighted: document.getElementById('edit-plan-highlight').checked,
+          display_order: parseInt(document.getElementById('edit-plan-order').value) || 0 
+      };
+      const res = await apiFetch(`/admin/landing/pricing/${id}`, { method: 'PUT', body: payload });
+      if (res.ok) { document.getElementById('editPricingModal').style.display = 'none'; showBanner('actionBanner', 'Plan Updated!', 'success'); loadLandingPricing(); }
+  });
+
   // --- UTILS & INIT ---
 
   function escapeHtml(str) {
@@ -843,6 +982,7 @@
     loadLandingTeachers(); // FIX: Added initialization here
     loadLandingToppers(); // <-- This is the missing trigger!
     loadLandingFaqs();
+    loadLandingPricing();
   }
 </script>
 
