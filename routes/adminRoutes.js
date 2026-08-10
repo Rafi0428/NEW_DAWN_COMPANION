@@ -254,4 +254,55 @@ router.put(
         }
     }
 );
+// ============================================================
+// FAQ CMS ROUTES
+// ============================================================
+
+// 1. GET ALL FAQS
+router.get('/admin/landing/faqs', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM landing_faqs ORDER BY display_order ASC, id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch FAQs.' });
+    }
+});
+
+// 2. ADD A NEW FAQ
+router.post('/admin/landing/faqs', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        const { question, answer, display_order } = req.body;
+        const result = await db.query(
+            'INSERT INTO landing_faqs (question, answer, display_order) VALUES ($1, $2, $3) RETURNING *',
+            [question, answer, display_order || 0]
+        );
+        res.status(201).json({ message: "FAQ added!", faq: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to add FAQ.' });
+    }
+});
+
+// 3. EDIT A FAQ
+router.put('/admin/landing/faqs/:id', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        const { question, answer, display_order } = req.body;
+        const result = await db.query(
+            'UPDATE landing_faqs SET question = $1, answer = $2, display_order = $3 WHERE id = $4 RETURNING *',
+            [question, answer, display_order || 0, req.params.id]
+        );
+        res.json({ message: 'FAQ updated successfully!', faq: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update FAQ.' });
+    }
+});
+
+// 4. DELETE A FAQ
+router.delete('/admin/landing/faqs/:id', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+        await db.query('DELETE FROM landing_faqs WHERE id = $1', [req.params.id]);
+        res.json({ message: 'FAQ deleted.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete FAQ.' });
+    }
+});
 module.exports = router;

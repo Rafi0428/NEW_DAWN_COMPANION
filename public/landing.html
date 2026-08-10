@@ -1362,65 +1362,17 @@
     </section>
     <!-- FAQ SECTION -->
     <section class="faq-section" id="faq">
-        
-        <!-- Subtle crimson background glow -->
         <div class="faq-ambient-glow"></div>
-
+        
         <div class="faq-container scroll-reveal">
-            
-            <!-- Section Header -->
-            <div class="features-header">
+            <div class="features-header" style="text-align: center; margin-bottom: 40px;">
                 <h2 class="section-title">FAQ</h2>
                 <div class="accent-line center-line"></div>
             </div>
 
-            <!-- The Accordion List -->
-            <div class="faq-accordion">
-                
-                <!-- Question 1 -->
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Is the study material aligned with the new WBCHSE semester system?</h3>
-                        <span class="faq-toggle">+</span>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Yes, absolutely. All our PDF notes, mock tests, and practice quizzes are strictly updated and mapped to the latest WBCHSE semester-wise syllabus.</p>
-                    </div>
-                </div>
-
-                <!-- Question 2 -->
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Can I access the platform on my mobile phone?</h3>
-                        <span class="faq-toggle">+</span>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Our platform is fully responsive and optimized for all devices. You can seamlessly study, take tests, and check analytics on your smartphone, tablet, or laptop.</p>
-                    </div>
-                </div>
-
-                <!-- Question 3 -->
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>How does the performance tracking work?</h3>
-                        <span class="faq-toggle">+</span>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Every time you take a quiz or mock test, our engine logs your scores. Your dashboard will show you visual analytics of your progress, highlighting strong subjects and pinpointing areas that need more revision.</p>
-                    </div>
-                </div>
-
-                <!-- Question 4 -->
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Are the mock tests timed?</h3>
-                        <span class="faq-toggle">+</span>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Yes, the semester mock tests are designed to simulate the real examination environment, complete with strict timers and our military-grade anti-cheat engine.</p>
-                    </div>
-                </div>
-
+            <!-- THIS IS THE BUCKET -->
+            <div class="faq-accordion" id="dynamic-faqs">
+                <!-- JavaScript will inject the .faq-item blocks here -->
             </div>
         </div>
     </section>
@@ -1705,6 +1657,47 @@
 
                         yearBlockHTML += `</div>`; // Close the flex container
                         toppersContainer.innerHTML += yearBlockHTML;
+                    });
+                }
+
+                // ==========================================
+                // 4. INJECT FAQS (Preserving Custom Animated UI)
+                // ==========================================
+                const faqsContainer = document.getElementById('dynamic-faqs');
+                if (faqsContainer && data.faqs && data.faqs.length > 0) {
+                    faqsContainer.innerHTML = ''; 
+                    
+                    // 1. Inject the HTML exactly matching your CSS structure
+                    data.faqs.forEach(faq => {
+                        faqsContainer.innerHTML += `
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <h3>${faq.question}</h3>
+                                    <span class="faq-toggle">+</span>
+                                </div>
+                                <div class="faq-answer">
+                                    <p>${faq.answer}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // 2. Attach the click listeners to trigger your CSS animations
+                    const faqItems = document.querySelectorAll('.faq-item');
+                    faqItems.forEach(item => {
+                        const questionBtn = item.querySelector('.faq-question');
+                        
+                        questionBtn.addEventListener('click', () => {
+                            // Optional: Close all other open FAQs when one is clicked
+                            faqItems.forEach(otherItem => {
+                                if (otherItem !== item) {
+                                    otherItem.classList.remove('active');
+                                }
+                            });
+                            
+                            // Toggle the 'active' class on the clicked FAQ
+                            item.classList.toggle('active');
+                        });
                     });
                 }
 

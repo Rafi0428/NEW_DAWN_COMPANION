@@ -153,6 +153,17 @@
           </form>
       </div>
 
+      <!-- ADD FAQ FORM -->
+      <div class="cms-card">
+          <h3>Add FAQ</h3>
+          <form id="add-faq-form">
+              <input type="text" id="faq-question" placeholder="Question" required class="cms-input">
+              <textarea id="faq-answer" rows="3" placeholder="Answer" required class="cms-input" style="resize:vertical;"></textarea>
+              <input type="number" id="faq-order" placeholder="Display Order (e.g. 1)" class="cms-input">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Add to Website</button>
+          </form>
+      </div>
+
       <!-- 3. UPDATE SETTINGS FORM -->
       <div class="cms-card">
           <h3>Update Contact Settings</h3>
@@ -163,7 +174,9 @@
               <button type="submit" class="btn btn-primary" style="width: 100%;">Save Settings</button>
           </form>
       </div>
+
   </div> <!-- FIX: Moved closing div here to close the flex container -->
+  
 
   <!-- ========================================== -->
   <!-- MANAGED TEACHERS LIST & EDIT MODAL         -->
@@ -222,6 +235,33 @@
               <div style="display:flex; gap:10px; margin-top:10px;">
                   <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
                   <button type="button" class="btn btn-ghost" onclick="closeEditTopperModal()" style="flex:1;">Cancel</button>
+              </div>
+          </form>
+      </div>
+  </div>
+  <!-- ========================================== -->
+  <!-- MANAGED FAQS LIST & EDIT MODAL             -->
+  <!-- ========================================== -->
+  <h1 style="margin-top: 56px;">Manage FAQs</h1>
+  <p class="subtitle">Edit or remove Frequently Asked Questions.</p>
+  <div class="dawn-line" style="margin-bottom: 24px;"></div>
+
+  <div id="landingFaqsList"></div>
+  <div id="emptyLandingFaqs" class="empty-state" style="display:none;"><p>No FAQs added yet.</p></div>
+
+  <!-- EDIT FAQ MODAL -->
+  <div id="editFaqModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:1000; align-items:center; justify-content:center;">
+      <div class="cms-card" style="max-width:480px; width:90%; position:relative;">
+          <h3>Edit FAQ</h3>
+          <form id="edit-faq-form">
+              <input type="hidden" id="edit-faq-id">
+              <input type="text" id="edit-faq-question" required class="cms-input" placeholder="Question">
+              <textarea id="edit-faq-answer" rows="4" required class="cms-input" style="resize:vertical;" placeholder="Answer"></textarea>
+              <input type="number" id="edit-faq-order" class="cms-input" placeholder="Display Order">
+              
+              <div style="display:flex; gap:10px; margin-top:10px;">
+                  <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
+                  <button type="button" class="btn btn-ghost" onclick="document.getElementById('editFaqModal').style.display='none'" style="flex:1;">Cancel</button>
               </div>
           </form>
       </div>
@@ -720,6 +760,73 @@
           loadLandingToppers(); // Refresh list automatically
       }
   });
+  // --- FAQ LOGIC ---
+  async function loadLandingFaqs() {
+      try {
+          const res = await apiFetch('/admin/landing/faqs');
+          const faqs = await res.json();
+          if (res.ok) renderLandingFaqsList(faqs);
+      } catch (err) { console.error(err); }
+  }
+
+  function renderLandingFaqsList(faqs) {
+      const container = document.getElementById('landingFaqsList');
+      const emptyState = document.getElementById('emptyLandingFaqs');
+      container.innerHTML = '';
+
+      if (faqs.length === 0) return emptyState.style.display = 'block';
+      emptyState.style.display = 'none';
+
+      faqs.forEach(faq => {
+          const row = document.createElement('div');
+          row.className = 'list-row';
+          row.innerHTML = `
+              <div class="who" style="max-width: 60%;">
+                  <div class="name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(faq.question)}</div>
+                  <div class="meta">Order: ${faq.display_order}</div>
+              </div>
+              <div class="actions">
+                  <button class="btn btn-ghost edit-faq-btn" data-id="${faq.id}" data-q="${escapeHtml(faq.question)}" data-a="${escapeHtml(faq.answer)}" data-order="${faq.display_order}">Edit</button>
+                  <button class="btn btn-ghost btn-danger delete-faq-btn" data-id="${faq.id}">Delete</button>
+              </div>
+          `;
+          container.appendChild(row);
+      });
+
+      document.querySelectorAll('.edit-faq-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+              document.getElementById('edit-faq-id').value = btn.dataset.id;
+              document.getElementById('edit-faq-question').value = btn.dataset.q;
+              document.getElementById('edit-faq-answer').value = btn.dataset.a;
+              document.getElementById('edit-faq-order').value = btn.dataset.order;
+              document.getElementById('editFaqModal').style.display = 'flex';
+          });
+      });
+
+      document.querySelectorAll('.delete-faq-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+              if (confirm('Delete this FAQ?')) {
+                  await apiFetch(`/admin/landing/faqs/${btn.dataset.id}`, { method: 'DELETE' });
+                  loadLandingFaqs();
+              }
+          });
+      });
+  }
+
+  document.getElementById('add-faq-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = { question: document.getElementById('faq-question').value, answer: document.getElementById('faq-answer').value, display_order: parseInt(document.getElementById('faq-order').value) || 0 };
+      const res = await apiFetch('/admin/landing/faqs', { method: 'POST', body: payload });
+      if (res.ok) { e.target.reset(); showBanner('actionBanner', 'FAQ Added!', 'success'); loadLandingFaqs(); }
+  });
+
+  document.getElementById('edit-faq-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-faq-id').value;
+      const payload = { question: document.getElementById('edit-faq-question').value, answer: document.getElementById('edit-faq-answer').value, display_order: parseInt(document.getElementById('edit-faq-order').value) || 0 };
+      const res = await apiFetch(`/admin/landing/faqs/${id}`, { method: 'PUT', body: payload });
+      if (res.ok) { document.getElementById('editFaqModal').style.display = 'none'; showBanner('actionBanner', 'FAQ Updated!', 'success'); loadLandingFaqs(); }
+  });
 
   // --- UTILS & INIT ---
 
@@ -735,6 +842,7 @@
     loadApprovedTeachers();
     loadLandingTeachers(); // FIX: Added initialization here
     loadLandingToppers(); // <-- This is the missing trigger!
+    loadLandingFaqs();
   }
 </script>
 
