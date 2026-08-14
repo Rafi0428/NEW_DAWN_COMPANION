@@ -235,8 +235,9 @@ router.get(
     async (req, res) => {
         try {
             const { rows } = await db.query(
-                `SELECT id, full_name, email, created_at
-                 FROM users WHERE role = 'teacher' AND status = 'pending'
+                `SELECT id, full_name, email, created_at 
+                 FROM users 
+                 WHERE role = 'teacher' AND status IN ('pending', 'rejected') 
                  ORDER BY created_at ASC`
             );
             res.json(rows);
@@ -280,7 +281,7 @@ router.post(
             const { rows } = await db.query(
                 `UPDATE users
                  SET status = 'approved', approved_by = $1, approved_at = now()
-                 WHERE id = $2 AND role = 'teacher' AND status = 'pending'
+                 WHERE id = $2 AND role = 'teacher' AND status IN ('pending', 'rejected')
                  RETURNING id, full_name, email, status`,
                 [req.user.id, req.params.teacherId]
             );
@@ -288,7 +289,7 @@ router.post(
             // that req.user.id actually belongs to an admin — this query would fail
             // at the DB level even if the requireRole check above were ever bypassed.
             if (rows.length === 0) {
-                return res.status(404).json({ error: 'Pending teacher not found.' });
+                return res.status(404).json({ error: 'Pending or rejected teacher not found.' });
             }
             res.json({ message: 'Teacher approved.', user: rows[0] });
         } catch (err) {
@@ -333,7 +334,7 @@ router.post(
     async (req, res) => {
         try {
             const { rows } = await db.query(
-                `UPDATE users SET status = 'revoked'
+                `UPDATE users SET status = 'pending'
                  WHERE id = $1 AND role = 'teacher'
                  RETURNING id, full_name, email, status`,
                 [req.params.teacherId]
