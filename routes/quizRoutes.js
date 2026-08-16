@@ -259,11 +259,20 @@ router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
         const feedback = [];
 
         questions.forEach(q => {
-            // Compare the student's string answer to the DB string answer
-            const studentAnswer = answers[q.id];
+            let studentAnswer = answers[q.id];
+
+            // 1. BULLETPROOF TRANSLATION: If the frontend sends a numeric index (0, 1, 2, 3) 
+            // instead of a letter, automatically convert it to A, B, C, or D.
+            if (studentAnswer !== undefined && /^[0-3]$/.test(String(studentAnswer))) {
+                const letterMap = ['A', 'B', 'C', 'D'];
+                studentAnswer = letterMap[parseInt(studentAnswer)];
+            }
+
+            // 2. Now perform the strict comparison
             const isCorrect = studentAnswer === q.correct_option;
             
             if (isCorrect) score++;
+
 
             // Package the feedback for the results screen
             feedback.push({
@@ -296,10 +305,6 @@ router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
     }
 });
 
-// ------------------------------------------------------------
-// GET /api/student/attempts
-// Fetches the logged-in student's past quiz attempts
-// ------------------------------------------------------------
 // ------------------------------------------------------------
 // GET /api/student/attempts
 // Fetches the logged-in student's past quiz attempts

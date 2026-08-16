@@ -380,10 +380,10 @@ router.get('/classes/:classId/gradebook', authenticateToken, requireRole('teache
                 qa.id AS attempt_id,
                 u.full_name AS student_name,
                 u.email AS student_email,
-                'Practice Quiz' AS quiz_title, 
+                q.title AS quiz_title, 
                 qa.score,
-                10 AS total_questions, 
-                CURRENT_TIMESTAMP AS submitted_at
+                qa.total_questions, 
+                qa.created_at AS submitted_at
             FROM quiz_attempts qa
             JOIN users u ON qa.student_id = u.id
             JOIN quizzes q ON qa.quiz_id = q.id
@@ -402,7 +402,6 @@ router.get('/classes/:classId/gradebook', authenticateToken, requireRole('teache
         res.status(500).json({ error: 'Failed to load gradebook data.' });
     }
 });
-
 
 // ============================================================
 // ENROLLMENTS - SELF JOIN (NEW ROUTE)
