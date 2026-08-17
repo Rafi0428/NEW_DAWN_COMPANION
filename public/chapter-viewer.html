@@ -91,10 +91,26 @@
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
   .doc-modal-header h3 { margin: 0; font-family: var(--font-mono); font-size: 0.85rem; color: var(--dawn-gold); letter-spacing: 0.05em; }
+  
   .doc-modal-body {
     flex: 1; background: #e5e7eb;
     position: relative;
   }
+  
+  /* --- INVISIBLE CLICK SHIELD --- */
+  /* This sits on top of the iframe to block clicks on Google's pop-out button */
+  .doc-modal-body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: transparent; 
+    z-index: 10; 
+    cursor: default;
+  }
+  
   .doc-modal-body iframe {
     width: 100%; height: 100%; border: none;
   }
@@ -261,11 +277,10 @@
     
     let safeUrl = fileUrl;
     
-    if (ext === 'PDF') {
-      safeUrl = `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
-    } else if (ext === 'DOC' || ext === 'DOCX') {
-      const absoluteUrl = window.location.origin + (fileUrl.startsWith('/') ? fileUrl : '/' + fileUrl);
-      safeUrl = `https://docs.google.com/gview?url=${encodeURIComponent(absoluteUrl)}&embedded=true`;
+    // We group PDF, DOC, and DOCX together here to force them ALL through Google Viewer.
+    // This bypasses the browser's native PDF plugin and enforces your right-click block!
+    if (ext === 'PDF' || ext === 'DOC' || ext === 'DOCX') {
+      safeUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
     }
 
     iframe.src = safeUrl;
