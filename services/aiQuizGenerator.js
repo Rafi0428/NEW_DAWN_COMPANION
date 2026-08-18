@@ -6,7 +6,7 @@
 // ============================================================
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.1-70b-versatile'; // Rock-solid Groq model
+const MODEL = 'llama-3.1-8b-instant'; // Updated to an accessible free-tier model
 
 const SYSTEM_PROMPT = `You are a quiz-generation engine for an educational platform. You will be given a single piece of Study Material text.
 
