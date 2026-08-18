@@ -1,12 +1,12 @@
 // ============================================================
 // services/aiQuizGenerator.js
-// Calls the Groq API to turn a Chapter's Study Material into
+// Calls the Grok (xAI) API to turn a Chapter's Study Material into
 // a finite, multiple-choice quiz — with explanations generated
 // in the same call so they stay grounded in the same context.
 // ============================================================
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.1-8b-instant'; // Updated to an accessible free-tier model
+const GROK_API_URL = 'https://api.x.ai/v1/chat/completions';
+const MODEL = 'grok-beta'; // The correct model name for xAI
 
 const SYSTEM_PROMPT = `You are a quiz-generation engine for an educational platform. You will be given a single piece of Study Material text.
 
@@ -49,12 +49,12 @@ ${studyMaterialText}
 
 Generate up to ${requestedCount} multiple-choice questions strictly from the Study Material above, following your system instructions exactly. Respond with JSON only.`;
 
-    const response = await fetch(GROQ_API_URL, {
+    const response = await fetch(GROK_API_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            // Now correctly using the Groq API key (with a 'q')
-            'Authorization': `Bearer ${process.env.GROQ_API_KEY}` 
+            // Correctly using your xAI Grok API key (with a K)
+            'Authorization': `Bearer ${process.env.GROK_API_KEY}` 
         },
         body: JSON.stringify({
             model: MODEL,
@@ -67,7 +67,7 @@ Generate up to ${requestedCount} multiple-choice questions strictly from the Stu
 
     if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Groq API request failed (${response.status}): ${errText}`);
+        throw new Error(`Grok API request failed (${response.status}): ${errText}`);
     }
 
     const data = await response.json();
