@@ -102,7 +102,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             },
             body: JSON.stringify({
                 // Use Groq's incredibly fast Llama 3.3 model
-                model: "llama-3.3-70b-versatile", 
+                model: "llama-3.1-8b-instant", 
                 messages: [
                     { role: "system", content: promptSystem },
                     { role: "user", content: `Here is the teacher's text:\n${rawText}` }
