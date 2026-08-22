@@ -20,7 +20,6 @@ router.get(
     authorizeClassAccess,
     async (req, res) => {
         try {
-            // Removed the hardcoded fallbacks to use the real database columns!
             const { rows } = await db.query(
                 `SELECT id, chapter_id, time_limit_minutes, created_at, title
                  FROM quizzes 
@@ -38,7 +37,6 @@ router.get(
 
 // ------------------------------------------------------------
 // PUT /api/quizzes/:quizId/time-limit
-// Allows teachers to modify the specific time limits whenever they want
 // ------------------------------------------------------------
 router.put('/quizzes/:quizId/time-limit', authenticateToken, requireRole('teacher'), async (req, res) => {
     try {
@@ -56,7 +54,7 @@ router.put('/quizzes/:quizId/time-limit', authenticateToken, requireRole('teache
 
 // ------------------------------------------------------------
 // POST /api/chapters/:chapterId/quiz/import-bank
-// The Core Parser Engine (Powered by Groq): Cleans input and segments into chunks of 25
+// The Core Parser Engine (Powered by GROQ): Cleans input and segments into chunks of 25
 // ------------------------------------------------------------
 router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireRole('teacher'), upload.single('question_bank'), async (req, res) => {
     if (!req.file) {
@@ -64,14 +62,14 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
     }
 
     const rawText = req.file.buffer.toString('utf-8');
-    const apiKey = process.env.GROK_API_KEY;
+    // MUST USE GROQ_API_KEY HERE!
+    const apiKey = process.env.GROQ_API_KEY; 
 
     if (!apiKey) {
         return res.status(500).json({ error: 'API Key missing from environment configurations.' });
     }
 
     try {
-        // Fetch the chapter title so our sets name themselves nicely (e.g., "Cold War - Set 1")
         const chapterRes = await db.query('SELECT title FROM chapters WHERE id = $1', [req.params.chapterId]);
         const chapterTitle = chapterRes.rows[0]?.title || 'Chapter Quiz';
         
@@ -91,18 +89,18 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             Return ONLY the valid raw JSON array. Do not wrap it in markdown code fences (like \`\`\`json), do not include any explanatory introduction text, just output the pure clean parsable JSON text array.
         `;
 
-        // Point to the Groq API
+        // CORRECT GROQ URL
         const targetUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
         const response = await fetch(targetUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}` // This uses your gsk_ key!
+                'Authorization': `Bearer ${apiKey}` 
             },
             body: JSON.stringify({
-                // Use Groq's incredibly fast Llama 3.3 model
-                model: "grok-beta", 
+                // CORRECT GROQ MODEL
+                model: "llama3-8b-8192", 
                 messages: [
                     { role: "system", content: promptSystem },
                     { role: "user", content: `Here is the teacher's text:\n${rawText}` }
@@ -125,7 +123,6 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             return res.status(500).json({ error: 'AI processing returned an empty payload structure.' });
         }
 
-        // Strip out accidental markdown backticks if the model ignores system parameters
         if (cleanJsonText.startsWith('```')) {
             cleanJsonText = cleanJsonText.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim();
         }
@@ -154,7 +151,6 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
                 const currentChunk = parsedQuestions.slice(i, i + chunkSize);
                 const quizTitle = `${chapterTitle} — Set ${setCounter}`;
 
-                // 1. Save the new Quiz set container
                 const quizInsert = await client.query(
                     `INSERT INTO quizzes (chapter_id, title, time_limit_minutes) 
                      VALUES ($1, $2, 25) RETURNING id`,
@@ -162,7 +158,6 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
                 );
                 const newQuizId = quizInsert.rows[0].id;
 
-                // 2. Insert all questions belonging to this set container sequentially
                 for (let orderIndex = 0; orderIndex < currentChunk.length; orderIndex++) {
                     const q = currentChunk[orderIndex];
                     await client.query(
@@ -202,11 +197,9 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
 
 // ------------------------------------------------------------
 // GET /api/quizzes/:quizId/take
-// Fetches a quiz for a student (HIDES answers and explanations)
 // ------------------------------------------------------------
 router.get('/quizzes/:quizId/take', authenticateToken, async (req, res) => {
     try {
-        // Fetch quiz metadata
         const quizRes = await db.query(
             'SELECT id, title, time_limit_minutes FROM quizzes WHERE id = $1',
             [req.params.quizId]
@@ -218,7 +211,6 @@ router.get('/quizzes/:quizId/take', authenticateToken, async (req, res) => {
         
         const quiz = quizRes.rows[0];
 
-        // Fetch questions, explicitly omitting correct_option and explanation
         const qRes = await db.query(
             `SELECT id, question_text, option_a, option_b, option_c, option_d, sequence_order 
              FROM questions WHERE quiz_id = $1 ORDER BY sequence_order ASC`,
@@ -234,15 +226,13 @@ router.get('/quizzes/:quizId/take', authenticateToken, async (req, res) => {
 
 // ------------------------------------------------------------
 // POST /api/quizzes/:quizId/grade
-// Evaluates answers, saves score to quiz_attempts, returns results
 // ------------------------------------------------------------
 router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
     try {
-        const { answers } = req.body; // Expected format: { "question_id": "A", "question_id2": "C" }
+        const { answers } = req.body; 
         const quizId = req.params.quizId;
-        const studentId = req.user.id; // User ID attached via authenticateToken middleware
+        const studentId = req.user.id; 
 
-        // 1. Fetch the correct answers and explanations from the database
         const qRes = await db.query(
             'SELECT id, correct_option, explanation FROM questions WHERE quiz_id = $1',
             [quizId]
@@ -253,7 +243,6 @@ router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'No questions found for this quiz.' });
         }
 
-        // 2. Calculate the score and generate feedback
         let score = 0;
         const totalQuestions = questions.length;
         const feedback = [];
@@ -261,20 +250,15 @@ router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
         questions.forEach(q => {
             let studentAnswer = answers[q.id];
 
-            // 1. BULLETPROOF TRANSLATION: If the frontend sends a numeric index (0, 1, 2, 3) 
-            // instead of a letter, automatically convert it to A, B, C, or D.
             if (studentAnswer !== undefined && /^[0-3]$/.test(String(studentAnswer))) {
                 const letterMap = ['A', 'B', 'C', 'D'];
                 studentAnswer = letterMap[parseInt(studentAnswer)];
             }
 
-            // 2. Now perform the strict comparison
             const isCorrect = studentAnswer === q.correct_option;
             
             if (isCorrect) score++;
 
-
-            // Package the feedback for the results screen
             feedback.push({
                 question_id: q.id,
                 submitted_answer: studentAnswer || null,
@@ -284,14 +268,12 @@ router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
             });
         });
 
-        // 3. Save the attempt to the newly created quiz_attempts table
         await db.query(
             `INSERT INTO quiz_attempts (student_id, quiz_id, score, total_questions) 
              VALUES ($1, $2, $3, $4)`,
             [studentId, quizId, score, totalQuestions]
         );
 
-        // 4. Return the final payload back to the student frontend
         res.json({
             score,
             totalQuestions,
@@ -307,7 +289,6 @@ router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
 
 // ------------------------------------------------------------
 // GET /api/student/attempts
-// Fetches the logged-in student's past quiz attempts
 // ------------------------------------------------------------
 router.get('/student/attempts', authenticateToken, requireRole('student'), async (req, res) => {
     try {
