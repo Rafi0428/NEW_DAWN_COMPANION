@@ -100,7 +100,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             },
             body: JSON.stringify({
                 // CORRECT GROQ MODEL
-                model: "llama3-8b-8192", 
+                model: "llama-4-scout", 
                 messages: [
                     { role: "system", content: promptSystem },
                     { role: "user", content: `Here is the teacher's text:\n${rawText}` }
