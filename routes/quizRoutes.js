@@ -62,8 +62,8 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
     }
 
     const rawText = req.file.buffer.toString('utf-8');
-    // MUST USE GROQ_API_KEY HERE!
-    const apiKey = process.env.GROQ_API_KEY; 
+    // MUST USE GEMINI_API_KEY HERE!
+    const apiKey = process.env.GEMINI_API_KEY; 
 
     if (!apiKey) {
         return res.status(500).json({ error: 'API Key missing from environment configurations.' });
@@ -89,8 +89,8 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             Return ONLY the valid raw JSON array. Do not wrap it in markdown code fences (like \`\`\`json), do not include any explanatory introduction text, just output the pure clean parsable JSON text array.
         `;
 
-        // CORRECT GROQ URL
-        const targetUrl = 'https://api.groq.com/openai/v1/chat/completions';
+        // CORRECT GEMINI URL
+        const targetUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
         const response = await fetch(targetUrl, {
             method: 'POST',
@@ -99,8 +99,8 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
                 'Authorization': `Bearer ${apiKey}` 
             },
             body: JSON.stringify({
-                // CORRECT GROQ MODEL
-                model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                // CORRECT GEMINI MODEL
+                model: "gemini-3.5-flash", 
                 messages: [
                     { role: "system", content: promptSystem },
                     { role: "user", content: `Here is the teacher's text:\n${rawText}` }
