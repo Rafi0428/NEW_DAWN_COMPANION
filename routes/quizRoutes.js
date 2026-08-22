@@ -100,7 +100,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             },
             body: JSON.stringify({
                 // CORRECT GROQ MODEL
-                model: "openai/gpt-oss-20b", 
+                model: "meta-llama/llama-4-scout-17b-16e-instruct",
                 messages: [
                     { role: "system", content: promptSystem },
                     { role: "user", content: `Here is the teacher's text:\n${rawText}` }
