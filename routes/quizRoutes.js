@@ -106,7 +106,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
                     { role: "user", content: `Here is the teacher's text:\n${rawText}` }
                 ],
                 temperature: 0.1,
-                max_tokens: 8000
+                max_tokens: 65536
             })
         });
 
