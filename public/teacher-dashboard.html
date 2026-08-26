@@ -34,7 +34,7 @@
   .class-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
   .class-list-item { 
     display: flex; 
-    flex-direction: column; /* Stack name and code vertically */
+    flex-direction: column;
     padding: 10px 14px;
     border-radius: var(--radius);
     cursor: pointer;
@@ -68,7 +68,6 @@
     font-weight: 500;
   }
 
-  /* Join Code Styling in Sidebar */
   .join-code-row {
     display: flex;
     align-items: center;
@@ -254,6 +253,24 @@
   @keyframes modalSlide { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .modal h2 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 20px; color: var(--text-primary); }
   .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+  
+  /* Quiz View Modal specific styles */
+  .quiz-view-modal {
+    max-width: 650px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .quiz-view-content {
+    overflow-y: auto;
+    flex: 1;
+    margin-bottom: 16px;
+    padding-right: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
+  .quiz-view-content::-webkit-scrollbar { width: 6px; }
+  .quiz-view-content::-webkit-scrollbar-thumb { background: rgba(138, 126, 240, 0.3); border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -408,6 +425,19 @@
   </div>
 </div>
 
+<!-- VIEW QUIZ MODAL -->
+<div class="modal-backdrop" id="viewQuizModal">
+  <div class="modal quiz-view-modal">
+    <h2 id="viewQuizTitle">Quiz Preview</h2>
+    <div id="viewQuizContent" class="quiz-view-content">
+      <!-- Quiz questions injected here -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="closeViewQuizModal">Close</button>
+    </div>
+  </div>
+</div>
+
 <script src="api.js"></script>
 <script>
   const user = requireAuth(['teacher']);
@@ -458,10 +488,8 @@
         const li = document.createElement('li');
         li.className = 'class-list-item ' + (cls.id === activeClassId ? 'active' : '');
         
-        // Ensure clicking anywhere on the item selects the class
         li.addEventListener('click', () => selectClass(cls.id));
         
-        // Format the display
         const codeDisplay = cls.join_code ? cls.join_code : 'N/A';
         
         li.innerHTML = `
@@ -475,18 +503,16 @@
           </div>
         `;
 
-        // Handle delete button specifically
         const delBtn = li.querySelector('.delete-class-btn');
         delBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent selecting the class when deleting
+            e.stopPropagation();
             deleteClass(cls.id);
         });
 
-        // Handle copy code button specifically
         const copyBtn = li.querySelector('.copy-code-btn');
         if (copyBtn) {
             copyBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent selecting the class when copying
+                e.stopPropagation();
                 navigator.clipboard.writeText(copyBtn.dataset.code);
                 copyBtn.textContent = 'Copied!';
                 copyBtn.classList.add('copied');
@@ -511,7 +537,6 @@
     activeSemesterId = null;
 
     document.querySelectorAll('.class-list-item').forEach(item => {
-      // Find the delete button inside the item to get the ID
       const btn = item.querySelector('.delete-class-btn');
       if (btn && btn.dataset.id === String(classId)) {
           item.classList.add('active');
@@ -522,7 +547,6 @@
 
     const cls = classes.find(c => c.id === classId);
     
-    // Hide standard views and tabs, show Semesters View
     document.getElementById('mainTabs').style.display = 'none';
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     
@@ -570,7 +594,7 @@
     document.getElementById('newClassName').value = '';
     document.getElementById('newClassDesc').value = '';
     await loadClasses();
-    selectClass(data.id); // The data object returned from the backend will now include the auto-generated join_code
+    selectClass(data.id);
   });
 
   // --- SEMESTERS ---
@@ -590,7 +614,7 @@
 
       semesters.forEach(sem => {
         const card = document.createElement('div');
-        card.className = 'subject-card'; // Reuse subject card style for consistent UI
+        card.className = 'subject-card'; 
         card.style.cursor = 'pointer';
         card.innerHTML = `
           <div class="subject-header" onclick="selectSemester('${sem.id}', '${escapeHtml(sem.name)}')">
@@ -610,11 +634,9 @@
   function selectSemester(semesterId, semesterName) {
     activeSemesterId = semesterId;
     
-    // Hide Semesters View, Show Tabs
     document.getElementById('semestersView').classList.remove('active');
     document.getElementById('mainTabs').style.display = 'flex';
     
-    // Switch to first tab (My Classes / Subjects)
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.tab[data-view="hierarchyView"]').classList.add('active');
     
@@ -807,7 +829,67 @@
     });
   }
 
-  async function loadChapterDetail(chapterId, subjectId) {
+  // GLOBAL QUIZ ACTIONS
+  window.deleteQuizSet = async function(quizId, chapterId, subjectId) {
+      if (!confirm('Are you sure you want to delete this quiz set? This action cannot be undone.')) return;
+      try {
+          const res = await apiFetch(`/quizzes/${quizId}`, { method: 'DELETE' });
+          if (!res.ok) {
+              const data = await res.json();
+              alert(data.error || 'Failed to delete quiz set.');
+              return;
+          }
+          loadChapterDetail(chapterId, subjectId);
+      } catch (err) {
+          alert('Network error while deleting quiz set.');
+      }
+  };
+
+  window.viewQuizDetails = async function(quizId) {
+      const modal = document.getElementById('viewQuizModal');
+      const content = document.getElementById('viewQuizContent');
+      const titleEl = document.getElementById('viewQuizTitle');
+      
+      content.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading questions...</div>';
+      titleEl.textContent = 'Loading Quiz...';
+      modal.classList.add('open');
+
+      try {
+          const res = await apiFetch(`/quizzes/${quizId}/take`);
+          const data = await res.json();
+          
+          if (!res.ok) {
+              content.innerHTML = `<p style="color: var(--dawn-rose);">${data.error || 'Failed to load quiz'}</p>`;
+              return;
+          }
+
+          titleEl.textContent = data.quiz.title;
+          if (data.questions.length === 0) {
+              content.innerHTML = '<p>No questions found in this set.</p>';
+              return;
+          }
+
+          content.innerHTML = data.questions.map((q, i) => `
+              <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <p style="font-weight: 500; margin-bottom: 12px;">${i + 1}. ${escapeHtml(q.question_text)}</p>
+                  <ul style="list-style: none; padding-left: 12px; font-size: 0.85rem; color: var(--text-muted);">
+                      <li style="margin-bottom: 6px;">A) ${escapeHtml(q.option_a)}</li>
+                      <li style="margin-bottom: 6px;">B) ${escapeHtml(q.option_b)}</li>
+                      <li style="margin-bottom: 6px;">C) ${escapeHtml(q.option_c)}</li>
+                      <li>D) ${escapeHtml(q.option_d)}</li>
+                  </ul>
+              </div>
+          `).join('');
+      } catch (err) {
+          content.innerHTML = '<p style="color: var(--dawn-rose);">Network error loading questions.</p>';
+      }
+  };
+
+  document.getElementById('closeViewQuizModal').addEventListener('click', () => {
+      document.getElementById('viewQuizModal').classList.remove('open');
+  });
+
+  window.loadChapterDetail = async function(chapterId, subjectId) {
     const detail = document.getElementById(`detail-${chapterId}`);
     detail.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading chapter elements…</div>';
 
@@ -842,8 +924,10 @@
             <span style="font-size:0.9rem; font-weight:bold; color:var(--dawn-gold);">📝 ${escapeHtml(q.title)}</span>
             <div style="display:flex; align-items:center; gap:8px;">
               <label style="font-size:0.75rem; color:var(--text-muted);">Time Limit (mins):</label>
-              <input type="number" value="${q.time_limit_minutes}" style="width:60px; padding:4px; text-align:center;" 
+              <input type="number" value="${q.time_limit_minutes}" style="width:60px; padding:4px; text-align:center; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--line); border-radius:4px;" 
                      onchange="updateQuizTime('${q.id}', this.value, '${chapterId}', '${subjectId}')">
+              <button class="btn-icon" onclick="viewQuizDetails('${q.id}')">View</button>
+              <button class="btn-icon danger" onclick="deleteQuizSet('${q.id}', '${chapterId}', '${subjectId}')">Delete</button>
             </div>
           </div>
         `).join('')
@@ -935,7 +1019,7 @@
     });
   }
 
-  async function updateQuizTime(quizId, newMinutes, chapterId, subjectId) {
+  window.updateQuizTime = async function(quizId, newMinutes, chapterId, subjectId) {
       const res = await apiFetch(`/quizzes/${quizId}/time-limit`, {
           method: 'PUT',
           body: { timeLimit: parseInt(newMinutes, 10) || 25 }
