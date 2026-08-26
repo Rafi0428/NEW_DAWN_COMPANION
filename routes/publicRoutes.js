@@ -21,7 +21,10 @@ router.get('/public/landing-data', async (req, res) => {
             pricing: pricing.rows // <-- NEW
         });
     } catch (err) {
-        res.status(500).json({ error: "Failed to load website data." });
+        // This will now expose the exact PostgreSQL error in your Vercel logs and browser console!
+        console.error('Landing page data fetch error:', err); 
+        res.status(500).json({ error: "Failed to load website data.", details: err.message });
     }
 });
+
 module.exports = router;
