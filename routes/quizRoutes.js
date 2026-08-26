@@ -53,8 +53,21 @@ router.put('/quizzes/:quizId/time-limit', authenticateToken, requireRole('teache
 });
 
 // ------------------------------------------------------------
+// DELETE /api/quizzes/:quizId
+// ------------------------------------------------------------
+router.delete('/quizzes/:quizId', authenticateToken, requireRole('teacher'), async (req, res) => {
+    try {
+        await db.query('DELETE FROM quizzes WHERE id = $1', [req.params.quizId]);
+        res.json({ message: 'Quiz set deleted successfully.' });
+    } catch (err) {
+        console.error('Delete quiz error:', err);
+        res.status(500).json({ error: 'Failed to delete quiz set.' });
+    }
+});
+
+// ------------------------------------------------------------
 // POST /api/chapters/:chapterId/quiz/import-bank
-// The Core Parser Engine (Powered by GROQ): Cleans input and segments into chunks of 25
+// The Core Parser Engine (Powered by Google Gemini): Cleans input and segments into chunks of 25
 // ------------------------------------------------------------
 router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireRole('teacher'), upload.single('question_bank'), async (req, res) => {
     if (!req.file) {
@@ -62,7 +75,6 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
     }
 
     const rawText = req.file.buffer.toString('utf-8');
-    // MUST USE GEMINI_API_KEY HERE!
     const apiKey = process.env.GEMINI_API_KEY; 
 
     if (!apiKey) {
@@ -89,7 +101,6 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             Return ONLY the valid raw JSON array. Do not wrap it in markdown code fences (like \`\`\`json), do not include any explanatory introduction text, just output the pure clean parsable JSON text array.
         `;
 
-        // CORRECT GEMINI URL
         const targetUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
         const response = await fetch(targetUrl, {
@@ -99,7 +110,6 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
                 'Authorization': `Bearer ${apiKey}` 
             },
             body: JSON.stringify({
-                // CORRECT GEMINI MODEL
                 model: "gemini-3.5-flash", 
                 messages: [
                     { role: "system", content: promptSystem },
@@ -113,7 +123,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
         const apiData = await response.json();
 
         if (!response.ok) {
-            console.error('Groq API Error:', apiData);
+            console.error('Gemini API Error:', apiData);
             return res.status(500).json({ error: 'AI processing failed. Check server terminal for details.' });
         }
 
@@ -131,7 +141,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
         try {
             parsedQuestions = JSON.parse(cleanJsonText);
         } catch (parseError) {
-            console.error('Failed to parse Groq output as JSON:', cleanJsonText);
+            console.error('Failed to parse Gemini output as JSON:', cleanJsonText);
             return res.status(500).json({ error: 'AI output was not valid JSON.' });
         }
 
@@ -141,7 +151,14 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
 
         // --- CHUNKING INTO BATCHES OF 25 ---
         const chunkSize = 25;
-        let setCounter = 1;
+        
+        // Dynamic Counter: Count existing quizzes to append new numbers accurately (e.g., Set 3, Set 4)
+        const existingQuizzesRes = await db.query(
+            'SELECT COUNT(*) FROM quizzes WHERE chapter_id = $1',
+            [req.params.chapterId]
+        );
+        let setCounter = parseInt(existingQuizzesRes.rows[0].count, 10) + 1;
+        
         const client = await db.connect();
 
         try {
@@ -252,7 +269,7 @@ router.post('/quizzes/:quizId/grade', authenticateToken, async (req, res) => {
 
             if (studentAnswer !== undefined && /^[0-3]$/.test(String(studentAnswer))) {
                 const letterMap = ['A', 'B', 'C', 'D'];
-                studentAnswer = letterMap[parseInt(studentAnswer)];
+                studentAnswer = letterMap[parseInt(studentAnswer, 10)];
             }
 
             const isCorrect = studentAnswer === q.correct_option;
@@ -299,7 +316,7 @@ router.get('/student/attempts', authenticateToken, requireRole('student'), async
                 c.title AS chapter_title,
                 qa.score,
                 qa.total_questions, 
-                CURRENT_TIMESTAMP AS submitted_at
+                qa.created_at AS submitted_at
             FROM quiz_attempts qa
             JOIN quizzes q ON qa.quiz_id = q.id
             JOIN chapters c ON q.chapter_id = c.id
