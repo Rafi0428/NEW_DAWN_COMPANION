@@ -306,16 +306,18 @@ router.post(
     requireRole('admin'),
     async (req, res) => {
         try {
-            const { rows } = await db.query(
-                `UPDATE users SET status = 'rejected'
-                 WHERE id = $1 AND role = 'teacher' AND status = 'pending'
-                 RETURNING id, full_name, email, status`,
+            // Completely delete the rejected teacher from the database.
+            // This prevents them from being stuck in the "Pending" list and fixes the 404 error.
+            const { rowCount } = await db.query(
+                `DELETE FROM users WHERE id = $1 AND role = 'teacher'`,
                 [req.params.teacherId]
             );
-            if (rows.length === 0) {
+            
+            if (rowCount === 0) {
                 return res.status(404).json({ error: 'Pending teacher not found.' });
             }
-            res.json({ message: 'Teacher application rejected.', user: rows[0] });
+            
+            res.json({ message: 'Teacher application rejected and removed.' });
         } catch (err) {
             console.error('Reject teacher error:', err);
             res.status(500).json({ error: 'Failed to reject teacher.' });
