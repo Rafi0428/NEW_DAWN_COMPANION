@@ -112,7 +112,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
         try {
             // Replaced fetch with the official SDK and targeted the fast 8b model
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-3.8-flash',
                 contents: fullPrompt,
                 config: {
                     responseMimeType: "application/json",
