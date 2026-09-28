@@ -1,12 +1,14 @@
 // ============================================================
 // services/aiQuizGenerator.js
-// Calls the Grok (xAI) API to turn a Chapter's Study Material into
+// Calls the Google Gemini API to turn a Chapter's Study Material into
 // a finite, multiple-choice quiz — with explanations generated
 // in the same call so they stay grounded in the same context.
 // ============================================================
 
-const GROK_API_URL = 'https://api.x.ai/v1/chat/completions';
-const MODEL = 'grok-beta'; // The correct model name for xAI
+const { GoogleGenAI } = require('@google/genai');
+
+// Using the Flash model: it is 4x-5x faster than Pro, which prevents the Vercel 504 Timeout Error
+const MODEL_NAME = 'gemini-1.5-flash';
 
 const SYSTEM_PROMPT = `You are a quiz-generation engine for an educational platform. You will be given a single piece of Study Material text.
 
@@ -37,7 +39,7 @@ OUTPUT SCHEMA:
  * @param {number} requestedCount - desired number of questions (may return fewer)
  * @returns {Promise<Array<{question_text, options, correct_option, explanation}>>}
  */
-async function generateQuizFromStudyMaterial(studyMaterialText, requestedCount = 5) {
+async function generateQuizFromStudyMaterial(studyMaterialText, requestedCount = 40) {
     if (!studyMaterialText || studyMaterialText.trim().length < 50) {
         throw new Error('Study material is too short to generate a meaningful quiz from.');
     }
@@ -49,61 +51,60 @@ ${studyMaterialText}
 
 Generate up to ${requestedCount} multiple-choice questions strictly from the Study Material above, following your system instructions exactly. Respond with JSON only.`;
 
-    const response = await fetch(GROK_API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            // Correctly using your xAI Grok API key (with a K)
-            'Authorization': `Bearer ${process.env.GROK_API_KEY}` 
-        },
-        body: JSON.stringify({
-            model: MODEL,
-            messages: [
-                { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'user', content: userPrompt }
-            ]
-        }),
-    });
+    const fullPrompt = `${SYSTEM_PROMPT}\n\n${userPrompt}`;
 
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Grok API request failed (${response.status}): ${errText}`);
-    }
+    // Initialize the modern GoogleGenAI Client
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const data = await response.json();
-    const textContent = data.choices?.[0]?.message?.content;
-
-    if (!textContent) {
-        throw new Error('No text content returned from the model.');
-    }
-
-    let parsed;
     try {
-        let rawText = textContent.trim();
-        if (rawText.startsWith('```json')) {
-            rawText = rawText.replace(/^```json/, '').replace(/```$/, '').trim();
-        } else if (rawText.startsWith('```')) {
-            rawText = rawText.replace(/^```/, '').replace(/```$/, '').trim();
+        const response = await ai.models.generateContent({
+            model: MODEL_NAME,
+            contents: fullPrompt,
+            config: {
+                responseMimeType: "application/json",
+                temperature: 0.2, 
+            }
+        });
+
+        const textContent = response.text;
+
+        if (!textContent) {
+            throw new Error('No text content returned from the model.');
         }
-        
-        parsed = JSON.parse(rawText);
-    } catch (err) {
-        throw new Error('Model did not return valid JSON — aborting quiz generation.');
+
+        let parsed;
+        try {
+            let rawText = textContent.trim();
+            if (rawText.startsWith('```json')) {
+                rawText = rawText.replace(/^```json/, '').replace(/```$/, '').trim();
+            } else if (rawText.startsWith('```')) {
+                rawText = rawText.replace(/^```/, '').replace(/```$/, '').trim();
+            }
+            parsed = JSON.parse(rawText);
+        } catch (err) {
+            throw new Error('Model did not return valid JSON — aborting quiz generation.');
+        }
+
+        if (!Array.isArray(parsed.questions)) {
+            throw new Error('Malformed quiz response — missing questions array.');
+        }
+
+        const validQuestions = parsed.questions.filter(q =>
+            validateQuestionShape(q) && validateQuestionGrounding(q, studyMaterialText)
+        );
+
+        if (validQuestions.length === 0) {
+            throw new Error('No valid, grounded questions could be generated from this study material.');
+        }
+
+        return validQuestions;
+    } catch (error) {
+        if (error.status === 503 || error.message?.includes('high demand')) {
+            console.error("Gemini Spike: Server overloaded.");
+            throw new Error("503: Google AI is experiencing high demand. Please try again.");
+        }
+        throw error;
     }
-
-    if (!Array.isArray(parsed.questions)) {
-        throw new Error('Malformed quiz response — missing questions array.');
-    }
-
-    const validQuestions = parsed.questions.filter(q =>
-        validateQuestionShape(q) && validateQuestionGrounding(q, studyMaterialText)
-    );
-
-    if (validQuestions.length === 0) {
-        throw new Error('No valid, grounded questions could be generated from this study material.');
-    }
-
-    return validQuestions;
 }
 
 function validateQuestionShape(q) {
