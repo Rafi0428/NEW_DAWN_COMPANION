@@ -8,7 +8,7 @@
 const { GoogleGenAI } = require('@google/genai');
 
 // Using the Flash model: it is 4x-5x faster than Pro, which prevents the Vercel 504 Timeout Error
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-2.5-flash';
 
 const SYSTEM_PROMPT = `You are a quiz-generation engine for an educational platform. You will be given a single piece of Study Material text.
 
