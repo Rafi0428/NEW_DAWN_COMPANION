@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const db = require('../db/pool');
+const { GoogleGenAI } = require('@google/genai'); // Added the modern Google SDK
 const { authenticateToken } = require('../middleware/auth');
 const { requireRole, authorizeClassAccess } = require('../middleware/rbac');
 const { resolveClassFromChapter } = require('../middleware/hierarchy');
@@ -67,7 +68,7 @@ router.delete('/quizzes/:quizId', authenticateToken, requireRole('teacher'), asy
 
 // ------------------------------------------------------------
 // POST /api/chapters/:chapterId/quiz/import-bank
-// The Core Parser Engine (Powered by Google Gemini): Cleans input and segments into chunks of 25
+// The Core Parser Engine (Powered by Google Gemini): Cleans input and segments into chunks of 40
 // ------------------------------------------------------------
 router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireRole('teacher'), upload.single('question_bank'), async (req, res) => {
     if (!req.file) {
@@ -101,33 +102,32 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             Return ONLY the valid raw JSON array. Do not wrap it in markdown code fences (like \`\`\`json), do not include any explanatory introduction text, just output the pure clean parsable JSON text array.
         `;
 
-        const targetUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        // Combine system prompt and user text
+        const fullPrompt = `${promptSystem}\n\nHere is the teacher's text:\n${rawText}`;
 
-        const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}` 
-            },
-            body: JSON.stringify({
-                model: "gemini-3.5-flash", 
-                messages: [
-                    { role: "system", content: promptSystem },
-                    { role: "user", content: `Here is the teacher's text:\n${rawText}` }
-                ],
-                temperature: 0.1,
-                max_tokens: 65536
-            })
-        });
+        // Initialize the modern GoogleGenAI Client
+        const ai = new GoogleGenAI({ apiKey: apiKey });
 
-        const apiData = await response.json();
+        let cleanJsonText;
+        try {
+            // Replaced fetch with the official SDK and targeted the fast 8b model
+            const response = await ai.models.generateContent({
+                model: 'gemini-1.5-flash-8b',
+                contents: fullPrompt,
+                config: {
+                    responseMimeType: "application/json",
+                    temperature: 0.1,
+                }
+            });
 
-        if (!response.ok) {
-            console.error('Gemini API Error:', apiData);
+            cleanJsonText = response.text;
+        } catch (apiError) {
+            console.error('Gemini API Error:', apiError);
+            if (apiError.status === 503 || apiError.message?.includes('high demand')) {
+                return res.status(503).json({ error: 'Google AI is experiencing high demand. Please try again.' });
+            }
             return res.status(500).json({ error: 'AI processing failed. Check server terminal for details.' });
         }
-
-        let cleanJsonText = apiData.choices?.[0]?.message?.content?.trim();
 
         if (!cleanJsonText) {
             return res.status(500).json({ error: 'AI processing returned an empty payload structure.' });
@@ -149,8 +149,8 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
             return res.status(500).json({ error: 'Parsed output failed to form a valid structural array.' });
         }
 
-        // --- CHUNKING INTO BATCHES OF 25 ---
-        const chunkSize = 25;
+        // --- CHUNKING INTO BATCHES OF 40 ---
+        const chunkSize = 40; // Changed from 25 to 40
         
         // Dynamic Counter: Count existing quizzes to append new numbers accurately (e.g., Set 3, Set 4)
         const existingQuizzesRes = await db.query(
@@ -168,9 +168,10 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
                 const currentChunk = parsedQuestions.slice(i, i + chunkSize);
                 const quizTitle = `${chapterTitle} — Set ${setCounter}`;
 
+                // Changed default time limit from 25 to 40 minutes to match chunk size
                 const quizInsert = await client.query(
                     `INSERT INTO quizzes (chapter_id, title, time_limit_minutes) 
-                     VALUES ($1, $2, 25) RETURNING id`,
+                     VALUES ($1, $2, 40) RETURNING id`,
                     [req.params.chapterId, quizTitle]
                 );
                 const newQuizId = quizInsert.rows[0].id;
