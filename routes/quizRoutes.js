@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const db = require('../db/pool');
-const { GoogleGenAI } = require('@google/genai'); // Added the modern Google SDK
+const { GoogleGenAI } = require('@google/genai');
 const { authenticateToken } = require('../middleware/auth');
 const { requireRole, authorizeClassAccess } = require('../middleware/rbac');
 const { resolveClassFromChapter } = require('../middleware/hierarchy');
@@ -68,7 +68,7 @@ router.delete('/quizzes/:quizId', authenticateToken, requireRole('teacher'), asy
 
 // ------------------------------------------------------------
 // POST /api/chapters/:chapterId/quiz/import-bank
-// The Core Parser Engine (Powered by Google Gemini): Cleans input and segments into chunks of 40
+// The Core Parser Engine (Powered by Google Gemini): Cleans input, auto-retries on 503, and segments into chunks of 40
 // ------------------------------------------------------------
 router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireRole('teacher'), upload.single('question_bank'), async (req, res) => {
     if (!req.file) {
@@ -109,24 +109,40 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
         const ai = new GoogleGenAI({ apiKey: apiKey });
 
         let cleanJsonText;
-        try {
-            // Replaced fetch with the official SDK and targeted the fast 8b model
-            const response = await ai.models.generateContent({
-                model: 'gemini-3.8-flash',
-                contents: fullPrompt,
-                config: {
-                    responseMimeType: "application/json",
-                    temperature: 0.1,
-                }
-            });
+        const maxRetries = 3;
+        
+        // --- NEW AUTO-RETRY LOOP TO BYPASS 503 HIGH DEMAND ERRORS ---
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                // Explicitly use the most stable, highly available model
+                const response = await ai.models.generateContent({
+                    model: 'gemini-1.5-flash', 
+                    contents: fullPrompt,
+                    config: {
+                        responseMimeType: "application/json",
+                        temperature: 0.1,
+                    }
+                });
 
-            cleanJsonText = response.text;
-        } catch (apiError) {
-            console.error('Gemini API Error:', apiError);
-            if (apiError.status === 503 || apiError.message?.includes('high demand')) {
-                return res.status(503).json({ error: 'Google AI is experiencing high demand. Please try again.' });
+                cleanJsonText = response.text;
+                break; // If successful, immediately break out of the retry loop
+
+            } catch (apiError) {
+                console.error(`Gemini API Error (Attempt ${attempt}):`, apiError);
+                
+                // If it's a 503 High Demand error, and we haven't reached max retries, wait and try again
+                if (apiError.status === 503 || apiError.message?.includes('high demand')) {
+                    if (attempt === maxRetries) {
+                        return res.status(503).json({ error: 'Google AI is currently overloaded. Please try again in a few minutes.' });
+                    }
+                    console.warn(`Google servers busy. Retrying in ${attempt * 2} seconds...`);
+                    // Wait 2 seconds, then 4 seconds, before trying again (Exponential Backoff)
+                    await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+                } else {
+                    // If it's a different error (like a 404 or bad API key), fail immediately
+                    return res.status(500).json({ error: 'AI processing failed due to an unexpected error.' });
+                }
             }
-            return res.status(500).json({ error: 'AI processing failed. Check server terminal for details.' });
         }
 
         if (!cleanJsonText) {
@@ -150,7 +166,7 @@ router.post('/chapters/:chapterId/quiz/import-bank', authenticateToken, requireR
         }
 
         // --- CHUNKING INTO BATCHES OF 40 ---
-        const chunkSize = 40; // Changed from 25 to 40
+        const chunkSize = 40; 
         
         // Dynamic Counter: Count existing quizzes to append new numbers accurately (e.g., Set 3, Set 4)
         const existingQuizzesRes = await db.query(
